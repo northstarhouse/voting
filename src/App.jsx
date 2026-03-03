@@ -1,35 +1,11 @@
-import { useState, useEffect, useRef } from "react";
-
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPpuv3mW_-SlbRJUdxxKSRg5IFlmWgdmnarGcJCljWQO1jZOgQLM9TTIwNjzWck40F/exec";
-
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
-async function uploadToDrive(file) {
-  const dataUrl = await fileToBase64(file);
-  const base64 = dataUrl.split(",")[1];
-  const res = await fetch(SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify({ fileName: file.name, fileData: base64, mimeType: file.type || "application/octet-stream" }),
-  });
-  const text = await res.text();
-  let data;
-  try { data = JSON.parse(text); } catch { throw new Error("Bad response: " + text.slice(0, 200)); }
-  if (data.error) throw new Error(data.error);
-  return { url: data.url, name: data.name };
-}
+import { useState, useEffect } from "react";
 
 const cardoLink = document.createElement("link");
 cardoLink.rel = "stylesheet";
 cardoLink.href = "https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&display=swap";
 document.head.appendChild(cardoLink);
 
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPpuv3mW_-SlbRJUdxxKSRg5IFlmWgdmnarGcJCljWQO1jZOgQLM9TTIwNjzWck40F/exec";
 const INITIAL_MEMBERS = ["Ken", "Wyn", "Paula", "Rick", "Rich", "Jeff"];
 const GOLD = "#886c44";
 
@@ -41,10 +17,10 @@ function useLS(key, def) {
   return [val, setVal];
 }
 
-function isClosed(t, memberCount) {
+function isClosed(t) {
   if (t.closed) return true;
   if (t.dueDate && new Date() > new Date(t.dueDate)) return true;
-  if (Object.keys(t.votes || {}).length >= memberCount) return true;
+  if (Object.keys(t.votes || {}).length >= (t.totalMembers || 6)) return true;
   return false;
 }
 
@@ -55,30 +31,79 @@ function fmtDate(iso) {
 
 const CHOICE_COLOR = { Yes: "#1a7a1a", No: "#c0392b", Abstain: "#666" };
 
+async function api(payload) {
+  const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
+  const text = await res.text();
+  let data;
+  try { data = JSON.parse(text); } catch { throw new Error("Bad response: " + text.slice(0, 200)); }
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
 export default function App() {
   const [members, setMembers] = useLS("nsb3_members", INITIAL_MEMBERS);
-  const [topics, setTopics] = useLS("nsb3_topics", []);
-  const [view, setView] = useState("home"); // home | topic | new | members
+  const [topics, setTopics] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
+  const [view, setView] = useState("home");
   const [selId, setSelId] = useState(null);
   const [form, setForm] = useState({ title: "", description: "", dueDate: "", fileUrl: "", fileName: "" });
   const [voteForm, setVoteForm] = useState({ voter: "", choice: "", note: "" });
   const [newMember, setNewMember] = useState("");
   const [toast, setToast] = useState(null);
-  const [uploadStatus, setUploadStatus] = useState("idle"); // idle | uploading | done | error
+  const [uploadStatus, setUploadStatus] = useState("idle");
 
   function toast_(msg) { setToast(msg); setTimeout(() => setToast(null), 6000); }
 
-  function submitTopic() {
+  async function loadTopics() {
+    try {
+      const data = await api({ action: "getTopics" });
+      setTopics(data.topics || []);
+    } catch (err) {
+      toast_(err.message || "Failed to load topics.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadTopics();
+    const interval = setInterval(loadTopics, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
+  async function submitTopic() {
     if (!form.title.trim()) return;
-    setTopics(p => [{
-      id: Date.now().toString(), title: form.title.trim(), description: form.description.trim(),
-      dueDate: form.dueDate, votes: {}, closed: false,
-      totalMembers: members.length, createdAt: new Date().toISOString(),
-      fileUrl: form.fileUrl.trim() || null, fileName: form.fileName.trim() || null
-    }, ...p]);
-    setForm({ title: "", description: "", dueDate: "", fileUrl: "", fileName: "" });
-    setUploadStatus("idle");
-    setView("home"); toast_("Topic added.");
+    setSyncing(true);
+    try {
+      await api({
+        action: "addTopic",
+        title: form.title.trim(),
+        description: form.description.trim(),
+        dueDate: form.dueDate,
+        totalMembers: members.length,
+        fileUrl: form.fileUrl || "",
+        fileName: form.fileName || "",
+      });
+      setForm({ title: "", description: "", dueDate: "", fileUrl: "", fileName: "" });
+      setUploadStatus("idle");
+      await loadTopics();
+      setView("home");
+      toast_("Topic added.");
+    } catch (err) {
+      toast_(err.message || "Failed to add topic.");
+    } finally {
+      setSyncing(false);
+    }
   }
 
   async function handleFileUpload(e) {
@@ -86,27 +111,49 @@ export default function App() {
     if (!file) return;
     setUploadStatus("uploading");
     try {
-      const { url, name } = await uploadToDrive(file);
-      setForm(p => ({ ...p, fileUrl: url, fileName: name }));
+      const dataUrl = await fileToBase64(file);
+      const base64 = dataUrl.split(",")[1];
+      const result = await api({ action: "uploadFile", fileName: file.name, fileData: base64, mimeType: file.type || "application/octet-stream" });
+      setForm(p => ({ ...p, fileUrl: result.url, fileName: result.name }));
       setUploadStatus("done");
-    } catch(err) {
+    } catch (err) {
       setUploadStatus("error");
       toast_(err.message || "Upload failed.");
     }
   }
 
-  function castVote(topicId) {
+  async function castVote(topicId) {
     if (!voteForm.choice || !voteForm.voter) return;
-    setTopics(p => p.map(t => t.id !== topicId ? t : {
-      ...t, votes: { ...t.votes, [voteForm.voter]: { choice: voteForm.choice, note: voteForm.note, time: new Date().toISOString() } }
-    }));
-    setVoteForm({ voter: "", choice: "", note: "" });
-    setView("home"); toast_("Vote recorded.");
+    setSyncing(true);
+    try {
+      await api({ action: "castVote", topicId, voter: voteForm.voter, choice: voteForm.choice, note: voteForm.note });
+      setVoteForm({ voter: "", choice: "", note: "" });
+      await loadTopics();
+      setView("home");
+      toast_("Vote recorded.");
+    } catch (err) {
+      toast_(err.message || "Failed to cast vote.");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  async function closeTopic(topicId) {
+    setSyncing(true);
+    try {
+      await api({ action: "closeTopic", topicId });
+      await loadTopics();
+      toast_("Topic closed.");
+    } catch (err) {
+      toast_(err.message || "Failed to close topic.");
+    } finally {
+      setSyncing(false);
+    }
   }
 
   const sel = topics.find(t => t.id === selId);
-  const openTopics = topics.filter(t => !isClosed(t, members.length));
-  const closedTopics = topics.filter(t => isClosed(t, members.length));
+  const openTopics = topics.filter(t => !isClosed(t));
+  const closedTopics = topics.filter(t => isClosed(t));
 
   // MEMBERS
   if (view === "members") return (
@@ -147,17 +194,18 @@ export default function App() {
         </span>
         {uploadStatus === "done" && <button type="button" onClick={e => { e.preventDefault(); setForm(p => ({ ...p, fileUrl: "", fileName: "" })); setUploadStatus("idle"); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "#c0392b", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>}
       </label>
-      <button onClick={submitTopic} style={{ ...btnStyle, width: "100%", padding: "14px", marginTop: 4 }}>Submit Topic</button>
+      <button onClick={submitTopic} disabled={syncing} style={{ ...btnStyle, width: "100%", padding: "14px", marginTop: 4, opacity: syncing ? 0.6 : 1 }}>
+        {syncing ? "Saving…" : "Submit Topic"}
+      </button>
     </Page>
   );
 
   // TOPIC DETAIL
   if (view === "topic" && sel) {
-    const closed = isClosed(sel, members.length);
+    const closed = isClosed(sel);
     const voteCount = Object.keys(sel.votes || {}).length;
     const tally = { Yes: 0, No: 0, Abstain: 0 };
     Object.values(sel.votes || {}).forEach(v => { if (tally[v.choice] !== undefined) tally[v.choice]++; });
-
     const voterAlreadyVoted = voteForm.voter && sel.votes?.[voteForm.voter];
 
     return (
@@ -215,7 +263,6 @@ export default function App() {
         {!closed && (
           <div style={{ border: `2px solid ${GOLD}`, borderRadius: 10, padding: 20 }}>
             <div style={{ fontWeight: "800", fontSize: 17, marginBottom: 16, color: "#1a1a1a" }}>Cast a Vote</div>
-
             <label style={lStyle}>Who is voting?</label>
             <select value={voteForm.voter} onChange={e => setVoteForm(p => ({ ...p, voter: e.target.value, choice: "", note: "" }))} style={{ ...iStyle, marginBottom: 14, color: voteForm.voter ? "#1a1a1a" : "#999" }}>
               <option value="">— Select your name —</option>
@@ -242,9 +289,11 @@ export default function App() {
                 <label style={lStyle}>Note (optional)</label>
                 <textarea value={voteForm.note} onChange={e => setVoteForm(p => ({ ...p, note: e.target.value }))}
                   placeholder="Add context to your vote..." rows={2} style={{ ...iStyle, marginBottom: 12 }} />
-                <button onClick={() => castVote(sel.id)} disabled={!voteForm.choice} style={{
-                  ...btnStyle, width: "100%", padding: "14px", opacity: voteForm.choice ? 1 : 0.4, cursor: voteForm.choice ? "pointer" : "default"
-                }}>Submit Vote</button>
+                <button onClick={() => castVote(sel.id)} disabled={!voteForm.choice || syncing} style={{
+                  ...btnStyle, width: "100%", padding: "14px",
+                  opacity: (voteForm.choice && !syncing) ? 1 : 0.4,
+                  cursor: (voteForm.choice && !syncing) ? "pointer" : "default"
+                }}>{syncing ? "Saving…" : "Submit Vote"}</button>
               </>
             )}
 
@@ -254,6 +303,12 @@ export default function App() {
               </div>
             )}
           </div>
+        )}
+
+        {!closed && (
+          <button onClick={() => closeTopic(sel.id)} disabled={syncing} style={{ ...outlineBtn, width: "100%", padding: "11px", opacity: syncing ? 0.5 : 1 }}>
+            Close Voting Early
+          </button>
         )}
       </Page>
     );
@@ -273,35 +328,43 @@ export default function App() {
           <div style={{ fontSize: 12, color: GOLD, textTransform: "uppercase", letterSpacing: 2, fontWeight: "bold" }}>North Star House</div>
           <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: "800", color: "#1a1a1a", fontFamily: "'Cardo', serif" }}>Board Voting</h1>
         </div>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button onClick={loadTopics} style={{ ...outlineBtn, fontSize: 13 }}>↻ Refresh</button>
+          <button onClick={() => setView("members")} style={{ ...outlineBtn, fontSize: 13 }}>Members</button>
+        </div>
       </div>
 
       <div style={{ marginBottom: 28 }}>
         <button onClick={() => setView("new")} style={{ ...btnStyle, width: "100%", padding: "12px" }}>+ New Topic</button>
       </div>
 
-      {openTopics.length > 0 && (
+      {loading ? (
+        <div style={{ textAlign: "center", color: "#888", padding: "60px 0", fontSize: 15 }}>Loading…</div>
+      ) : (
         <>
-          <div style={secLabel}>Open Votes ({openTopics.length})</div>
-          {openTopics.map(t => <TopicRow key={t.id} t={t} memberCount={members.length} onClick={() => { setSelId(t.id); setVoteForm({ voter: "", choice: "", note: "" }); setView("topic"); }} />)}
+          {openTopics.length > 0 && (
+            <>
+              <div style={secLabel}>Open Votes ({openTopics.length})</div>
+              {openTopics.map(t => <TopicRow key={t.id} t={t} onClick={() => { setSelId(t.id); setVoteForm({ voter: "", choice: "", note: "" }); setView("topic"); }} />)}
+            </>
+          )}
+          {closedTopics.length > 0 && (
+            <>
+              <div style={{ ...secLabel, marginTop: 24 }}>Closed ({closedTopics.length})</div>
+              {closedTopics.map(t => <TopicRow key={t.id} t={t} onClick={() => { setSelId(t.id); setView("topic"); }} />)}
+            </>
+          )}
+          {topics.length === 0 && (
+            <div style={{ textAlign: "center", color: "#888", padding: "60px 0", fontSize: 15 }}>No topics yet. Add the first one above.</div>
+          )}
         </>
-      )}
-
-      {closedTopics.length > 0 && (
-        <>
-          <div style={{ ...secLabel, marginTop: 24 }}>Closed ({closedTopics.length})</div>
-          {closedTopics.map(t => <TopicRow key={t.id} t={t} memberCount={members.length} onClick={() => { setSelId(t.id); setView("topic"); }} />)}
-        </>
-      )}
-
-      {topics.length === 0 && (
-        <div style={{ textAlign: "center", color: "#888", padding: "60px 0", fontSize: 15 }}>No topics yet. Add the first one above.</div>
       )}
     </div>
   );
 }
 
-function TopicRow({ t, memberCount, onClick }) {
-  const closed = isClosed(t, memberCount);
+function TopicRow({ t, onClick }) {
+  const closed = isClosed(t);
   const voteCount = Object.keys(t.votes || {}).length;
   return (
     <div onClick={onClick} style={{
@@ -314,7 +377,7 @@ function TopicRow({ t, memberCount, onClick }) {
     >
       <div>
         <div style={{ fontSize: 16, fontWeight: "800", color: "#1a1a1a" }}>{t.title}</div>
-        <div style={{ fontSize: 13, color: "#666", marginTop: 3 }}>{voteCount} / {memberCount} voted · {fmtDate(t.dueDate)}</div>
+        <div style={{ fontSize: 13, color: "#666", marginTop: 3 }}>{voteCount} / {t.totalMembers} voted · {fmtDate(t.dueDate)}</div>
       </div>
       <span style={{
         fontSize: 13, fontWeight: "bold", padding: "4px 12px", borderRadius: 20, whiteSpace: "nowrap", marginLeft: 12,
@@ -345,6 +408,7 @@ function Badge({ color, children }) {
 }
 
 const btnStyle = { background: GOLD, color: "#fff", border: "none", borderRadius: 8, padding: "12px 18px", fontSize: 15, cursor: "pointer", fontFamily: "system-ui, sans-serif", fontWeight: "bold" };
+const outlineBtn = { background: "#fff", border: `2px solid ${GOLD}`, borderRadius: 8, padding: "10px 16px", fontSize: 14, cursor: "pointer", fontFamily: "system-ui, sans-serif", color: GOLD, fontWeight: "bold" };
 const iStyle = { width: "100%", border: "2px solid #ccc", borderRadius: 8, padding: "10px 14px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "'Cardo', serif" };
 const lStyle = { fontSize: 14, fontWeight: "bold", color: "#333", marginBottom: 2, fontFamily: "'Cardo', serif" };
 const secLabel = { fontSize: 12, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 10, fontFamily: "system-ui, sans-serif" };
