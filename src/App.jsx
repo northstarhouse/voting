@@ -35,7 +35,7 @@ export default function App() {
   const [topics, setTopics] = useLS("nsb3_topics", []);
   const [view, setView] = useState("home"); // home | topic | new | members
   const [selId, setSelId] = useState(null);
-  const [form, setForm] = useState({ title: "", description: "", dueDate: "", file: null, fileName: "" });
+  const [form, setForm] = useState({ title: "", description: "", dueDate: "", fileUrl: "", fileName: "" });
   const [voteForm, setVoteForm] = useState({ voter: "", choice: "", note: "" });
   const [newMember, setNewMember] = useState("");
   const [toast, setToast] = useState(null);
@@ -48,19 +48,10 @@ export default function App() {
       id: Date.now().toString(), title: form.title.trim(), description: form.description.trim(),
       dueDate: form.dueDate, votes: {}, closed: false,
       totalMembers: members.length, createdAt: new Date().toISOString(),
-      file: form.file || null, fileName: form.fileName || null
+      fileUrl: form.fileUrl.trim() || null, fileName: form.fileName.trim() || null
     }, ...p]);
-    setForm({ title: "", description: "", dueDate: "", file: null, fileName: "" });
+    setForm({ title: "", description: "", dueDate: "", fileUrl: "", fileName: "" });
     setView("home"); toast_("Topic added.");
-  }
-
-  function handleFileChange(e) {
-    const f = e.target.files[0];
-    if (!f) return;
-    if (f.size > 4 * 1024 * 1024) { toast_("File too large (max 4 MB)"); return; }
-    const reader = new FileReader();
-    reader.onload = ev => setForm(p => ({ ...p, file: ev.target.result, fileName: f.name }));
-    reader.readAsDataURL(f);
   }
 
   function castVote(topicId) {
@@ -104,15 +95,10 @@ export default function App() {
         placeholder="Additional context..." rows={4} style={{ ...iStyle, resize: "vertical" }} />
       <label style={lStyle}>Due Date (optional)</label>
       <input type="date" value={form.dueDate} onChange={e => setForm(p => ({ ...p, dueDate: e.target.value }))} style={iStyle} />
-      <label style={lStyle}>Attachment (optional, max 4 MB)</label>
-      <label style={{ display: "flex", alignItems: "center", gap: 12, border: "2px dashed #ccc", borderRadius: 8, padding: "12px 16px", cursor: "pointer", background: "#fafafa" }}>
-        <input type="file" onChange={handleFileChange} style={{ display: "none" }} />
-        <span style={{ background: GOLD, color: "#fff", borderRadius: 6, padding: "6px 14px", fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>Choose file</span>
-        <span style={{ fontSize: 14, color: form.fileName ? "#1a1a1a" : "#999", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {form.fileName || "No file chosen"}
-        </span>
-        {form.fileName && <button type="button" onClick={e => { e.preventDefault(); setForm(p => ({ ...p, file: null, fileName: "" })); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "#c0392b", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>}
-      </label>
+      <label style={lStyle}>Attachment link (optional)</label>
+      <div style={{ fontSize: 13, color: "#888", marginTop: -6 }}>Upload to Google Drive or Dropbox, then paste the shareable link below.</div>
+      <input value={form.fileUrl} onChange={e => setForm(p => ({ ...p, fileUrl: e.target.value }))} placeholder="https://drive.google.com/..." style={iStyle} />
+      <input value={form.fileName} onChange={e => setForm(p => ({ ...p, fileName: e.target.value }))} placeholder="Display name (e.g. Q3 Budget.pdf)" style={iStyle} />
       <button onClick={submitTopic} style={{ ...btnStyle, width: "100%", padding: "14px", marginTop: 4 }}>Submit Topic</button>
     </Page>
   );
@@ -129,9 +115,9 @@ export default function App() {
     return (
       <Page title={sel.title} onBack={() => { setVoteForm({ voter: "", choice: "", note: "" }); setView("home"); }}>
         {sel.description && <p style={{ fontSize: 15, color: "#333", lineHeight: 1.6, margin: "0 0 4px" }}>{sel.description}</p>}
-        {sel.file && (
-          <a href={sel.file} download={sel.fileName} style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: "bold", color: GOLD, textDecoration: "none", border: `1px solid ${GOLD}`, borderRadius: 6, padding: "6px 14px", background: "#fff" }}>
-            ↓ {sel.fileName}
+        {sel.fileUrl && (
+          <a href={sel.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: "bold", color: GOLD, textDecoration: "none", border: `1px solid ${GOLD}`, borderRadius: 6, padding: "6px 14px", background: "#fff" }}>
+            ↗ {sel.fileName || "View attachment"}
           </a>
         )}
 
