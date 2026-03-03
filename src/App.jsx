@@ -1,4 +1,27 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxPpuv3mW_-SlbRJUdxxKSRg5IFlmWgdmnarGcJCljWQO1jZOgQLM9TTIwNjzWck40F/exec";
+
+function fileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function uploadToDrive(file) {
+  const dataUrl = await fileToBase64(file);
+  const base64 = dataUrl.split(",")[1];
+  const res = await fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ fileName: file.name, fileData: base64, mimeType: file.type || "application/octet-stream" }),
+  });
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return { url: data.url, name: data.name };
+}
 
 const cardoLink = document.createElement("link");
 cardoLink.rel = "stylesheet";
@@ -39,6 +62,7 @@ export default function App() {
   const [voteForm, setVoteForm] = useState({ voter: "", choice: "", note: "" });
   const [newMember, setNewMember] = useState("");
   const [toast, setToast] = useState(null);
+  const [uploadStatus, setUploadStatus] = useState("idle"); // idle | uploading | done | error
 
   function toast_(msg) { setToast(msg); setTimeout(() => setToast(null), 2500); }
 
@@ -51,7 +75,22 @@ export default function App() {
       fileUrl: form.fileUrl.trim() || null, fileName: form.fileName.trim() || null
     }, ...p]);
     setForm({ title: "", description: "", dueDate: "", fileUrl: "", fileName: "" });
+    setUploadStatus("idle");
     setView("home"); toast_("Topic added.");
+  }
+
+  async function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploadStatus("uploading");
+    try {
+      const { url, name } = await uploadToDrive(file);
+      setForm(p => ({ ...p, fileUrl: url, fileName: name }));
+      setUploadStatus("done");
+    } catch {
+      setUploadStatus("error");
+      toast_("Upload failed. Try again.");
+    }
   }
 
   function castVote(topicId) {
@@ -95,10 +134,17 @@ export default function App() {
         placeholder="Additional context..." rows={4} style={{ ...iStyle, resize: "vertical" }} />
       <label style={lStyle}>Due Date (optional)</label>
       <input type="date" value={form.dueDate} onChange={e => setForm(p => ({ ...p, dueDate: e.target.value }))} style={iStyle} />
-      <label style={lStyle}>Attachment link (optional)</label>
-      <div style={{ fontSize: 13, color: "#888", marginTop: -6 }}>Upload to Google Drive or Dropbox, then paste the shareable link below.</div>
-      <input value={form.fileUrl} onChange={e => setForm(p => ({ ...p, fileUrl: e.target.value }))} placeholder="https://drive.google.com/..." style={iStyle} />
-      <input value={form.fileName} onChange={e => setForm(p => ({ ...p, fileName: e.target.value }))} placeholder="Display name (e.g. Q3 Budget.pdf)" style={iStyle} />
+      <label style={lStyle}>Attachment (optional)</label>
+      <label style={{ display: "flex", alignItems: "center", gap: 12, border: `2px dashed ${uploadStatus === "done" ? "#1a7a1a" : uploadStatus === "error" ? "#c0392b" : "#ccc"}`, borderRadius: 8, padding: "12px 16px", cursor: uploadStatus === "uploading" ? "default" : "pointer", background: "#fafafa" }}>
+        <input type="file" onChange={handleFileUpload} style={{ display: "none" }} disabled={uploadStatus === "uploading"} />
+        <span style={{ background: uploadStatus === "done" ? "#1a7a1a" : GOLD, color: "#fff", borderRadius: 6, padding: "6px 14px", fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>
+          {uploadStatus === "uploading" ? "Uploading…" : uploadStatus === "done" ? "✓ Uploaded" : "Upload to Drive"}
+        </span>
+        <span style={{ fontSize: 14, color: form.fileName ? "#1a1a1a" : "#999", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {uploadStatus === "uploading" ? "Saving to Board Voting folder…" : form.fileName || "No file chosen"}
+        </span>
+        {uploadStatus === "done" && <button type="button" onClick={e => { e.preventDefault(); setForm(p => ({ ...p, fileUrl: "", fileName: "" })); setUploadStatus("idle"); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "#c0392b", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>}
+      </label>
       <button onClick={submitTopic} style={{ ...btnStyle, width: "100%", padding: "14px", marginTop: 4 }}>Submit Topic</button>
     </Page>
   );
