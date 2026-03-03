@@ -30,7 +30,7 @@ cardoLink.rel = "stylesheet";
 cardoLink.href = "https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&display=swap";
 document.head.appendChild(cardoLink);
 
-const INITIAL_MEMBERS = ["Haley", "Member 2", "Member 3", "Member 4", "Member 5", "Member 6"];
+const INITIAL_MEMBERS = ["Ken", "Wyn", "Paula", "Rick", "Rich", "Jeff"];
 const GOLD = "#886c44";
 
 function useLS(key, def) {
