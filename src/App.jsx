@@ -14,11 +14,11 @@ function fileToBase64(file) {
 async function uploadToDrive(file) {
   const dataUrl = await fileToBase64(file);
   const base64 = dataUrl.split(",")[1];
-  const res = await fetch(SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify({ fileName: file.name, fileData: base64, mimeType: file.type || "application/octet-stream" }),
-  });
-  const data = await res.json();
+  const params = new URLSearchParams();
+  params.set("payload", JSON.stringify({ fileName: file.name, fileData: base64, mimeType: file.type || "application/octet-stream" }));
+  const res = await fetch(SCRIPT_URL, { method: "POST", body: params });
+  const text = await res.text();
+  const data = JSON.parse(text);
   if (data.error) throw new Error(data.error);
   return { url: data.url, name: data.name };
 }
