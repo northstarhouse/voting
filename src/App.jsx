@@ -14,11 +14,13 @@ function fileToBase64(file) {
 async function uploadToDrive(file) {
   const dataUrl = await fileToBase64(file);
   const base64 = dataUrl.split(",")[1];
-  const params = new URLSearchParams();
-  params.set("payload", JSON.stringify({ fileName: file.name, fileData: base64, mimeType: file.type || "application/octet-stream" }));
-  const res = await fetch(SCRIPT_URL, { method: "POST", body: params });
+  const res = await fetch(SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify({ fileName: file.name, fileData: base64, mimeType: file.type || "application/octet-stream" }),
+  });
   const text = await res.text();
-  const data = JSON.parse(text);
+  let data;
+  try { data = JSON.parse(text); } catch { throw new Error("Bad response: " + text.slice(0, 200)); }
   if (data.error) throw new Error(data.error);
   return { url: data.url, name: data.name };
 }
@@ -64,7 +66,7 @@ export default function App() {
   const [toast, setToast] = useState(null);
   const [uploadStatus, setUploadStatus] = useState("idle"); // idle | uploading | done | error
 
-  function toast_(msg) { setToast(msg); setTimeout(() => setToast(null), 2500); }
+  function toast_(msg) { setToast(msg); setTimeout(() => setToast(null), 6000); }
 
   function submitTopic() {
     if (!form.title.trim()) return;
@@ -87,9 +89,9 @@ export default function App() {
       const { url, name } = await uploadToDrive(file);
       setForm(p => ({ ...p, fileUrl: url, fileName: name }));
       setUploadStatus("done");
-    } catch {
+    } catch(err) {
       setUploadStatus("error");
-      toast_("Upload failed. Try again.");
+      toast_(err.message || "Upload failed.");
     }
   }
 
