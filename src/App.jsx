@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 
 const cardoLink = document.createElement("link");
 cardoLink.rel = "stylesheet";
-cardoLink.href = "https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&display=swap";
+cardoLink.href = "https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=Open+Sans:wght@400;600;700;800&display=swap";
 document.head.appendChild(cardoLink);
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrsP-Nnq_hp5QWWks6BA5ZnuS2B9E_KQyFskRQC0PSehb6NcspJhyO4wlqD3-VfsEwxg/exec";
@@ -340,9 +340,9 @@ export default function App() {
 
   // HOME
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", maxWidth: 560, margin: "0 auto", padding: "0 16px 40px" }}>
+    <div style={{ fontFamily: "'Open Sans', sans-serif", maxWidth: 560, margin: "0 auto", padding: "0 16px 40px" }}>
       {toast && (
-        <div style={{ position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", background: "#222", color: "#fff", padding: "10px 24px", borderRadius: 8, fontSize: 14, zIndex: 999, fontFamily: "system-ui, sans-serif" }}>
+        <div style={{ position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", background: "#222", color: "#fff", padding: "10px 24px", borderRadius: 8, fontSize: 14, zIndex: 999, fontFamily: "'Open Sans', sans-serif" }}>
           {toast}
         </div>
       )}
@@ -411,7 +411,7 @@ function TopicRow({ t, onClick }) {
 
 function Page({ title, onBack, children }) {
   return (
-    <div style={{ fontFamily: "system-ui, sans-serif", maxWidth: 560, margin: "0 auto", padding: "0 16px 40px" }}>
+    <div style={{ fontFamily: "'Open Sans', sans-serif", maxWidth: 560, margin: "0 auto", padding: "0 16px 40px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "24px 0 20px" }}>
         <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
         <h2 style={{ fontSize: 22, margin: 0, fontWeight: "800", color: "#1a1a1a" }}>{title}</h2>
@@ -425,8 +425,8 @@ function Badge({ color, children }) {
   return <span style={{ fontSize: 12, fontWeight: "bold", padding: "4px 10px", borderRadius: 20, background: color, color: "#fff" }}>{children}</span>;
 }
 
-const btnStyle = { background: GOLD, color: "#fff", border: "none", borderRadius: 8, padding: "12px 18px", fontSize: 15, cursor: "pointer", fontFamily: "system-ui, sans-serif", fontWeight: "bold" };
-const outlineBtn = { background: "#fff", border: `2px solid ${GOLD}`, borderRadius: 8, padding: "10px 16px", fontSize: 14, cursor: "pointer", fontFamily: "system-ui, sans-serif", color: GOLD, fontWeight: "bold" };
+const btnStyle = { background: GOLD, color: "#fff", border: "none", borderRadius: 8, padding: "12px 18px", fontSize: 15, cursor: "pointer", fontFamily: "'Open Sans', sans-serif", fontWeight: "bold" };
+const outlineBtn = { background: "#fff", border: `2px solid ${GOLD}`, borderRadius: 8, padding: "10px 16px", fontSize: 14, cursor: "pointer", fontFamily: "'Open Sans', sans-serif", color: GOLD, fontWeight: "bold" };
 const iStyle = { width: "100%", border: "2px solid #ccc", borderRadius: 8, padding: "10px 14px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "'Cardo', serif" };
 const lStyle = { fontSize: 14, fontWeight: "bold", color: "#333", marginBottom: 2, fontFamily: "'Cardo', serif" };
-const secLabel = { fontSize: 12, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 10, fontFamily: "system-ui, sans-serif" };
+const secLabel = { fontSize: 12, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 10, fontFamily: "'Open Sans', sans-serif" };
