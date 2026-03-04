@@ -209,13 +209,28 @@ export default function App() {
     const voterAlreadyVoted = voteForm.voter && sel.votes?.[voteForm.voter];
 
     return (
-      <Page title={sel.title} onBack={() => { setVoteForm({ voter: "", choice: "", note: "" }); setView("home"); }}>
-        {sel.description && <p style={{ fontSize: 15, color: "#333", lineHeight: 1.6, margin: "0 0 4px" }}>{sel.description}</p>}
-        {sel.fileUrl && (
-          <a href={sel.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: "bold", color: GOLD, textDecoration: "none", border: `1px solid ${GOLD}`, borderRadius: 6, padding: "6px 14px", background: "#fff" }}>
-            ↗ {sel.fileName || "View attachment"}
-          </a>
-        )}
+      <Page title="" onBack={() => { setVoteForm({ voter: "", choice: "", note: "" }); setView("home"); }}>
+        {/* Topic Info Box */}
+        <div style={{ border: `2px solid ${GOLD}`, borderRadius: 12, padding: 20, background: "#fffdf8" }}>
+          <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 2, color: GOLD, marginBottom: 6 }}>Topic</div>
+          <div style={{ fontSize: 20, fontWeight: "800", color: "#1a1a1a", marginBottom: 14, fontFamily: "'Cardo', serif" }}>{sel.title}</div>
+
+          {sel.description && (
+            <>
+              <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 2, color: GOLD, marginBottom: 4 }}>Description</div>
+              <p style={{ fontSize: 15, color: "#333", lineHeight: 1.6, margin: "0 0 14px" }}>{sel.description}</p>
+            </>
+          )}
+
+          <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 2, color: GOLD, marginBottom: 6 }}>Attached Documents</div>
+          {sel.fileUrl ? (
+            <a href={sel.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: "bold", color: GOLD, textDecoration: "none", border: `1px solid ${GOLD}`, borderRadius: 6, padding: "6px 14px", background: "#fff" }}>
+              ↗ {sel.fileName || "View attachment"}
+            </a>
+          ) : (
+            <div style={{ fontSize: 14, color: "#aaa" }}>None</div>
+          )}
+        </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
           <Badge color={closed ? "#555" : "#1a7a1a"}>{closed ? "CLOSED" : "OPEN"}</Badge>
