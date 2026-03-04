@@ -279,11 +279,14 @@ export default function App() {
             <label style={{ ...lStyle, marginBottom: 8 }}>Who is voting?</label>
             <select value={voteForm.voter} onChange={e => setVoteForm(p => ({ ...p, voter: e.target.value, choice: "", note: "" }))} style={{ ...iStyle, marginBottom: 14, color: voteForm.voter ? "#1a1a1a" : "#999" }}>
               <option value="">— Select your name —</option>
-              {members.map(m => (
-                <option key={m} value={m} disabled={!!sel.votes?.[m]}>
-                  {m}{sel.votes?.[m] ? " (already voted)" : ""}
-                </option>
-              ))}
+              {members.map(m => {
+                const voted = !!sel.votes?.[m];
+                return (
+                  <option key={m} value={m} disabled={voted} style={{ color: voted ? "#bbb" : "#222" }}>
+                    {m}{voted ? " (voted)" : ""}
+                  </option>
+                );
+              })}
             </select>
 
             {voteForm.voter && !voterAlreadyVoted && (
@@ -318,11 +321,6 @@ export default function App() {
           </div>
         )}
 
-        {!closed && (
-          <button onClick={() => closeTopic(sel.id)} disabled={syncing} style={{ ...outlineBtn, width: "100%", padding: "11px", opacity: syncing ? 0.5 : 1 }}>
-            Close Voting Early
-          </button>
-        )}
       </Page>
     );
   }
