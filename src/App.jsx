@@ -215,7 +215,7 @@ export default function App() {
           <div style={{ background: GOLD, padding: "10px 20px" }}>
             <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 2, color: "rgba(255,255,255,0.75)" }}>Motion to Vote On</div>
           </div>
-          <div style={{ background: "#fffdf8", padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+          <div style={{ background: "#fff", padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
               <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 4 }}>Topic</div>
               <div style={{ fontSize: 19, fontWeight: "800", color: "#1a1a1a", fontFamily: "'Cardo', serif", lineHeight: 1.3 }}>{sel.title}</div>
