@@ -336,15 +336,13 @@ export default function App() {
       )}
 
       <div style={{ background: GOLD, padding: "20px 24px 22px", textAlign: "center" }}>
-        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: 6, display: "block", margin: "0 auto 6px" }}>
-          {/* Ballot box */}
-          <rect x="4" y="14" width="28" height="18" rx="2" stroke="white" strokeWidth="2" fill="none"/>
-          {/* Slot on top */}
-          <rect x="13" y="13" width="10" height="3" rx="1" fill="white"/>
-          {/* Paper going in */}
-          <rect x="12" y="4" width="12" height="14" rx="1.5" stroke="white" strokeWidth="1.8" fill="none"/>
-          {/* Star on paper */}
-          <path d="M18 7.5l1 2.2h2.3l-1.85 1.4.7 2.3L18 12l-2.15 1.4.7-2.3L14.7 9.7H17z" fill="white"/>
+        <svg width="38" height="38" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: 6, display: "block", margin: "0 auto 6px" }}>
+          <rect x="4.5" y="15.5" width="27" height="15.5" rx="2.2" stroke="white" strokeWidth="2.1" fill="none" />
+          <path d="M4.5 15.5h27" stroke="white" strokeWidth="2.1" strokeLinecap="round" />
+          <path d="M12.8 18h10.4" stroke="white" strokeWidth="2.1" strokeLinecap="round" />
+          <rect x="12.4" y="5.7" width="11.2" height="11.8" rx="1.7" stroke="white" strokeWidth="1.9" fill="none" transform="rotate(-8 18 11.6)" />
+          <path d="M18 9.1l.85 1.85 2.05.25-1.52 1.42.4 2.05-1.78-.96-1.78.96.4-2.05-1.52-1.42 2.05-.25z" stroke="white" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
+          <path d="M8.8 24.6h18.4" stroke="white" strokeWidth="1.7" strokeLinecap="round" opacity="0.9" />
         </svg>
         <div style={{ fontSize: 10, fontFamily: SERIF, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 4 }}>North Star House</div>
         <h1 style={{ fontSize: 26, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>Board Voting</h1>
