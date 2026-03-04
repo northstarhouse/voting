@@ -30,7 +30,9 @@ function isClosed(t) {
 
 function fmtDate(iso) {
   if (!iso) return "No due date";
-  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  var d = new Date(iso);
+  if (isNaN(d.getTime())) return "No due date";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
 const CHOICE_COLOR = { Yes: "#1a7a1a", No: "#c0392b", Abstain: "#666" };
@@ -182,7 +184,7 @@ export default function App() {
   if (view === "new") return (
     <Page title="New Voting Topic" onBack={() => setView("home")}>
       <label style={lStyle}>Title *</label>
-      <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} placeholder="e.g. Approve Q3 Budget" style={iStyle} />
+      <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} style={iStyle} />
       <label style={lStyle}>Description (optional)</label>
       <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
         placeholder="Additional context..." rows={4} style={{ ...iStyle, resize: "vertical" }} />
