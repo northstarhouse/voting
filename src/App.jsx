@@ -336,7 +336,16 @@ export default function App() {
       )}
 
       <div style={{ background: GOLD, padding: "20px 24px 22px", textAlign: "center" }}>
-        <div style={{ fontSize: 28, marginBottom: 6 }}>🗳️</div>
+        <svg width="36" height="36" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: 6, display: "block", margin: "0 auto 6px" }}>
+          {/* Ballot box */}
+          <rect x="4" y="14" width="28" height="18" rx="2" stroke="white" strokeWidth="2" fill="none"/>
+          {/* Slot on top */}
+          <rect x="13" y="13" width="10" height="3" rx="1" fill="white"/>
+          {/* Paper going in */}
+          <rect x="12" y="4" width="12" height="14" rx="1.5" stroke="white" strokeWidth="1.8" fill="none"/>
+          {/* Star on paper */}
+          <path d="M18 7.5l1 2.2h2.3l-1.85 1.4.7 2.3L18 12l-2.15 1.4.7-2.3L14.7 9.7H17z" fill="white"/>
+        </svg>
         <div style={{ fontSize: 10, fontFamily: SERIF, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 4 }}>North Star House</div>
         <h1 style={{ fontSize: 26, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>Board Voting</h1>
       </div>
