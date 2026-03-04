@@ -7,8 +7,8 @@ document.head.appendChild(cardoLink);
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrsP-Nnq_hp5QWWks6BA5ZnuS2B9E_KQyFskRQC0PSehb6NcspJhyO4wlqD3-VfsEwxg/exec";
 const INITIAL_MEMBERS = ["Ken", "Wyn", "Paula", "Rick", "Jeff", "Rich"];
-const GOLD = "#7a6240";
-const CREAM = "#f5f0e8";
+const GOLD = "#886c44";
+const CREAM = "#fdfbf8";
 const OPEN = "'Manrope', Tahoma, sans-serif";
 const SERIF = "'Cardo', Georgia, serif";
 
@@ -336,7 +336,7 @@ export default function App() {
       )}
 
       <div style={{ background: GOLD, padding: "20px 24px 22px" }}>
-        <div style={{ fontSize: 11, fontFamily: OPEN, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 3, fontWeight: "600", marginBottom: 4 }}>North Star House</div>
+        <div style={{ fontSize: 10, fontFamily: SERIF, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 4 }}>North Star House</div>
         <h1 style={{ fontSize: 26, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>Board Voting</h1>
       </div>
 
@@ -403,7 +403,7 @@ function Page({ title, onBack, children }) {
   return (
     <div style={{ fontFamily: OPEN, minHeight: "100vh", background: CREAM }}>
       <div style={{ background: GOLD, padding: "16px 20px" }}>
-        <div style={{ fontSize: 11, fontFamily: OPEN, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 3, fontWeight: "600", marginBottom: 4 }}>North Star House</div>
+        <div style={{ fontSize: 10, fontFamily: SERIF, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 4 }}>North Star House</div>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button onClick={onBack} style={{ background: "none", border: "none", color: "#fff", fontSize: 20, cursor: "pointer", padding: 0, lineHeight: 1, opacity: 0.85 }}>←</button>
           <h2 style={{ fontSize: 22, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>{title || "Board Voting"}</h2>
