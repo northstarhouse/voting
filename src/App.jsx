@@ -337,13 +337,11 @@ export default function App() {
 
       <div style={{ background: GOLD, padding: "20px 24px 22px", textAlign: "center" }}>
         <svg width="38" height="38" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: 6, display: "block", margin: "0 auto 6px" }}>
-          <rect x="6" y="20" width="24" height="11" rx="2.2" stroke="white" strokeWidth="2.1" fill="none" />
-          <path d="M6 20h24" stroke="white" strokeWidth="2.1" strokeLinecap="round" />
-          <path d="M14 23h8" stroke="white" strokeWidth="2.1" strokeLinecap="round" />
-          <rect x="12.6" y="4.6" width="10.8" height="10.8" rx="1.7" stroke="white" strokeWidth="1.9" fill="none" />
-          <path d="M18 7.6l.8 1.7 1.9.2-1.4 1.3.35 1.95-1.65-.9-1.65.9.35-1.95-1.4-1.3 1.9-.2z" stroke="white" strokeWidth="1.45" strokeLinejoin="round" fill="none" />
-          <path d="M18 16.4v2.1" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
-          <path d="M16.9 17.8L18 19l1.1-1.2" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M5.7 28.9l3.3-3.1h17.8l3.5 2.6-2.2 2.1H8.4z" stroke="white" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <path d="M9.3 25.7v4.8" stroke="white" strokeWidth="1.9" strokeLinecap="round" />
+          <path d="M26.8 25.7v3.8" stroke="white" strokeWidth="1.9" strokeLinecap="round" />
+          <rect x="10.4" y="8.8" width="14.6" height="15.7" rx="1.8" transform="rotate(11 10.4 8.8)" stroke="white" strokeWidth="2.1" fill="none" />
+          <path d="M19.1 13.9l1 2.1 2.3.3-1.7 1.6.45 2.3-2-1.1-2 1.1.45-2.3-1.7-1.6 2.3-.3z" stroke="white" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
         </svg>
         <div style={{ fontSize: 10, fontFamily: SERIF, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 4 }}>North Star House</div>
         <h1 style={{ fontSize: 26, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>Board Voting</h1>
