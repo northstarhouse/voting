@@ -232,8 +232,8 @@ export default function App() {
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
           <Badge color={closed ? "#555" : "#1a7a1a"}>{closed ? "CLOSED" : "OPEN"}</Badge>
-          <Badge color="#333">{voteCount} / {sel.totalMembers} voted</Badge>
-          <Badge color="#333">Due: {fmtDate(sel.dueDate)}</Badge>
+          <Badge color={GOLD}>{voteCount} / {sel.totalMembers} voted</Badge>
+          <Badge color={GOLD}>Due: {fmtDate(sel.dueDate)}</Badge>
         </div>
 
         {/* Results */}
