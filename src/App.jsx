@@ -336,11 +336,12 @@ export default function App() {
       )}
 
       <div style={{ background: GOLD, padding: "20px 24px 22px", textAlign: "center" }}>
-        <svg width="38" height="38" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: 6, display: "block", margin: "0 auto 6px" }}>
-          <path d="M4.8 27.8 8.2 24h19.9l3.3 2.4-2.2 2.5H7.2z" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          <path d="M9.8 24.1 12 8.2l14.1 2.2-2.2 15.9" stroke="white" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          <path d="m14.8 16.6 3.2 4.1 6.2-8" stroke="white" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          <path d="M24.8 23.6v1.4" stroke="white" strokeWidth="1.8" strokeLinecap="round" />
+        <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: 6, display: "block", margin: "0 auto 6px" }}>
+          <rect x="6" y="19" width="28" height="16" rx="1.6" fill="white" />
+          <path d="M7 20.2 11.3 14h17.4l4.3 6.2" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="13.4" y="22.9" width="13.2" height="6.1" rx="0.8" fill={GOLD} />
+          <rect x="14.6" y="6.2" width="10.8" height="12.5" rx="1.2" fill="white" />
+          <path d="m17.4 12.5 2.4 2.6 4.7-5.4" stroke={GOLD} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
         <div style={{ fontSize: 10, fontFamily: SERIF, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 4 }}>North Star House</div>
         <h1 style={{ fontSize: 26, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>Board Voting</h1>
