@@ -347,15 +347,9 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "24px 0 20px" }}>
-        <div>
-          <div style={{ fontSize: 12, color: GOLD, textTransform: "uppercase", letterSpacing: 2, fontWeight: "bold" }}>North Star House</div>
-          <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: "800", color: "#1a1a1a", fontFamily: "'Cardo', serif" }}>Board Voting</h1>
-        </div>
-        <div style={{ display: "flex", gap: 8 }}>
-          <button onClick={loadTopics} style={{ ...outlineBtn, fontSize: 13 }}>↻ Refresh</button>
-          <button onClick={() => setView("members")} style={{ ...outlineBtn, fontSize: 13 }}>Members</button>
-        </div>
+      <div style={{ padding: "24px 0 20px" }}>
+        <div style={{ fontSize: 12, color: GOLD, textTransform: "uppercase", letterSpacing: 2, fontWeight: "bold" }}>North Star House</div>
+        <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: "800", color: "#1a1a1a", fontFamily: "'Cardo', serif" }}>Board Voting</h1>
       </div>
 
       <div style={{ marginBottom: 28 }}>
