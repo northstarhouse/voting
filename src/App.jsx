@@ -274,7 +274,7 @@ export default function App() {
 
         {/* Vote form */}
         {!closed && (
-          <div style={{ border: `2px solid ${GOLD}`, borderRadius: 10, padding: 20 }}>
+          <div style={{ border: `2px solid ${GOLD}`, borderRadius: 10, padding: 20, background: "#fff" }}>
             <div style={{ fontWeight: "700", fontSize: 17, fontFamily: CARDO, marginBottom: 16, color: "#1a1a1a" }}>Cast a Vote</div>
             <label style={lStyle}>Who is voting?</label>
             <select value={voteForm.voter} onChange={e => setVoteForm(p => ({ ...p, voter: e.target.value, choice: "", note: "" }))} style={{ ...iStyle, marginBottom: 14, color: voteForm.voter ? "#1a1a1a" : "#999" }}>
