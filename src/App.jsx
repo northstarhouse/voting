@@ -337,11 +337,12 @@ export default function App() {
 
       <div style={{ background: GOLD, padding: "20px 24px 22px", textAlign: "center" }}>
         <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: 6, display: "block", margin: "0 auto 6px" }}>
-          <rect x="6" y="19" width="28" height="16" rx="1.6" fill="white" />
-          <path d="M7 20.2 11.3 14h17.4l4.3 6.2" stroke="white" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
-          <rect x="13.4" y="22.9" width="13.2" height="6.1" rx="0.8" fill={GOLD} />
-          <rect x="14.6" y="6.2" width="10.8" height="12.5" rx="1.2" fill="white" />
-          <path d="m17.4 12.5 2.4 2.6 4.7-5.4" stroke={GOLD} strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" />
+          <rect x="6" y="12.8" width="28" height="22" rx="3.6" stroke="white" strokeWidth="2.2" />
+          <rect x="6" y="12.8" width="28" height="7.3" rx="3.2" stroke="white" strokeWidth="2.2" />
+          <path d="M14.2 16.4h11.6" stroke="white" strokeWidth="2.1" strokeLinecap="round" />
+          <rect x="14.4" y="4.9" width="11.2" height="10.4" rx="1.3" fill={GOLD} stroke="white" strokeWidth="2.1" />
+          <path d="m17.4 10.3 2 2.2 4.1-4.8" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <text x="20" y="31.1" textAnchor="middle" fill="white" fontSize="7.2" fontWeight="700" letterSpacing="0.8">VOTE</text>
         </svg>
         <div style={{ fontSize: 10, fontFamily: SERIF, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 4 }}>North Star House</div>
         <h1 style={{ fontSize: 26, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>Board Voting</h1>
