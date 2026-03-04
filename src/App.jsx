@@ -211,25 +211,34 @@ export default function App() {
     return (
       <Page title="" onBack={() => { setVoteForm({ voter: "", choice: "", note: "" }); setView("home"); }}>
         {/* Topic Info Box */}
-        <div style={{ border: `2px solid ${GOLD}`, borderRadius: 12, padding: 20, background: "#fffdf8" }}>
-          <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 2, color: GOLD, marginBottom: 6 }}>Topic</div>
-          <div style={{ fontSize: 20, fontWeight: "800", color: "#1a1a1a", marginBottom: 14, fontFamily: "'Cardo', serif" }}>{sel.title}</div>
+        <div style={{ borderRadius: 12, overflow: "hidden", border: "2px solid #d4b483", boxShadow: "0 2px 8px rgba(136,108,68,0.10)" }}>
+          <div style={{ background: GOLD, padding: "10px 20px" }}>
+            <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 2, color: "rgba(255,255,255,0.75)" }}>Motion to Vote On</div>
+          </div>
+          <div style={{ background: "#fffdf8", padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 4 }}>Topic</div>
+              <div style={{ fontSize: 19, fontWeight: "800", color: "#1a1a1a", fontFamily: "'Cardo', serif", lineHeight: 1.3 }}>{sel.title}</div>
+            </div>
 
-          {sel.description && (
-            <>
-              <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 2, color: GOLD, marginBottom: 4 }}>Description</div>
-              <p style={{ fontSize: 15, color: "#333", lineHeight: 1.6, margin: "0 0 14px" }}>{sel.description}</p>
-            </>
-          )}
+            {sel.description && (
+              <div>
+                <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 4 }}>Description</div>
+                <p style={{ fontSize: 15, color: "#333", lineHeight: 1.6, margin: 0 }}>{sel.description}</p>
+              </div>
+            )}
 
-          <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 2, color: GOLD, marginBottom: 6 }}>Attached Documents</div>
-          {sel.fileUrl ? (
-            <a href={sel.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: "bold", color: GOLD, textDecoration: "none", border: `1px solid ${GOLD}`, borderRadius: 6, padding: "6px 14px", background: "#fff" }}>
-              ↗ {sel.fileName || "View attachment"}
-            </a>
-          ) : (
-            <div style={{ fontSize: 14, color: "#aaa" }}>None</div>
-          )}
+            <div>
+              <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 6 }}>Attached Documents</div>
+              {sel.fileUrl ? (
+                <a href={sel.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: "bold", color: GOLD, textDecoration: "none", border: `1px solid ${GOLD}`, borderRadius: 6, padding: "6px 14px", background: "#fff" }}>
+                  ↗ {sel.fileName || "View attachment"}
+                </a>
+              ) : (
+                <div style={{ fontSize: 14, color: "#aaa" }}>None</div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
