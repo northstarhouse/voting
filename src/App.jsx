@@ -335,7 +335,8 @@ export default function App() {
         </div>
       )}
 
-      <div style={{ background: GOLD, padding: "20px 24px 22px" }}>
+      <div style={{ background: GOLD, padding: "20px 24px 22px", textAlign: "center" }}>
+        <div style={{ fontSize: 28, marginBottom: 6 }}>🗳️</div>
         <div style={{ fontSize: 10, fontFamily: SERIF, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 4 }}>North Star House</div>
         <h1 style={{ fontSize: 26, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>Board Voting</h1>
       </div>
@@ -402,12 +403,10 @@ function TopicRow({ t, onClick }) {
 function Page({ title, onBack, children }) {
   return (
     <div style={{ fontFamily: OPEN, minHeight: "100vh", background: CREAM }}>
-      <div style={{ background: GOLD, padding: "16px 20px" }}>
-        <div style={{ fontSize: 10, fontFamily: SERIF, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 4 }}>North Star House</div>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button onClick={onBack} style={{ background: "none", border: "none", color: "#fff", fontSize: 20, cursor: "pointer", padding: 0, lineHeight: 1, opacity: 0.85 }}>←</button>
-          <h2 style={{ fontSize: 22, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>{title || "Board Voting"}</h2>
-        </div>
+      <div style={{ background: GOLD, padding: "16px 20px", textAlign: "center", position: "relative" }}>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#fff", fontSize: 20, cursor: "pointer", padding: 0, lineHeight: 1, opacity: 0.85, position: "absolute", left: 20, top: "50%", transform: "translateY(-50%)" }}>←</button>
+        <div style={{ fontSize: 10, fontFamily: SERIF, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 2 }}>North Star House</div>
+        <h2 style={{ fontSize: 22, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>{title || "Board Voting"}</h2>
       </div>
       <div style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 40px", display: "flex", flexDirection: "column", gap: 12 }}>{children}</div>
     </div>
