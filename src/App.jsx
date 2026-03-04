@@ -8,6 +8,8 @@ document.head.appendChild(cardoLink);
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrsP-Nnq_hp5QWWks6BA5ZnuS2B9E_KQyFskRQC0PSehb6NcspJhyO4wlqD3-VfsEwxg/exec";
 const INITIAL_MEMBERS = ["Ken", "Wyn", "Paula", "Rick", "Jeff", "Rich"];
 const GOLD = "#886c44";
+const OPEN = "'Open Sans', sans-serif";
+const CARDO = "'Cardo', serif";
 
 function useLS(key, def) {
   const [val, setVal] = useState(() => {
@@ -160,7 +162,7 @@ export default function App() {
     <Page title="Board Members" onBack={() => setView("home")}>
       {members.map((m, i) => (
         <div key={m} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", border: "1px solid #ddd", borderRadius: 8, background: "#fff" }}>
-          <span style={{ fontSize: 16 }}>{m}</span>
+          <span style={{ fontSize: 16, fontFamily: OPEN }}>{m}</span>
           <button onClick={() => setMembers(p => p.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#c0392b", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>×</button>
         </div>
       ))}
@@ -186,10 +188,10 @@ export default function App() {
       <label style={lStyle}>Attachment (optional)</label>
       <label style={{ display: "flex", alignItems: "center", gap: 12, border: `2px dashed ${uploadStatus === "done" ? "#1a7a1a" : uploadStatus === "error" ? "#c0392b" : "#ccc"}`, borderRadius: 8, padding: "12px 16px", cursor: uploadStatus === "uploading" ? "default" : "pointer", background: "#fafafa" }}>
         <input type="file" onChange={handleFileUpload} style={{ display: "none" }} disabled={uploadStatus === "uploading"} />
-        <span style={{ background: uploadStatus === "done" ? "#1a7a1a" : GOLD, color: "#fff", borderRadius: 6, padding: "6px 14px", fontSize: 14, fontWeight: "bold", whiteSpace: "nowrap" }}>
+        <span style={{ background: uploadStatus === "done" ? "#1a7a1a" : GOLD, color: "#fff", borderRadius: 6, padding: "6px 14px", fontSize: 14, fontWeight: "600", fontFamily: OPEN, whiteSpace: "nowrap" }}>
           {uploadStatus === "uploading" ? "Uploading…" : uploadStatus === "done" ? "✓ Uploaded" : "Upload to Drive"}
         </span>
-        <span style={{ fontSize: 14, color: form.fileName ? "#1a1a1a" : "#999", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+        <span style={{ fontSize: 14, fontFamily: OPEN, color: form.fileName ? "#1a1a1a" : "#999", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           {uploadStatus === "uploading" ? "Saving to Board Voting folder…" : form.fileName || "No file chosen"}
         </span>
         {uploadStatus === "done" && <button type="button" onClick={e => { e.preventDefault(); setForm(p => ({ ...p, fileUrl: "", fileName: "" })); setUploadStatus("idle"); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "#c0392b", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>}
@@ -213,29 +215,29 @@ export default function App() {
         {/* Topic Info Box */}
         <div style={{ borderRadius: 12, overflow: "hidden", border: "2px solid #d4b483", boxShadow: "0 2px 8px rgba(136,108,68,0.10)" }}>
           <div style={{ background: GOLD, padding: "10px 20px" }}>
-            <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 2, color: "rgba(255,255,255,0.75)" }}>Motion to Vote On</div>
+            <div style={{ fontSize: 11, fontWeight: "700", fontFamily: OPEN, textTransform: "uppercase", letterSpacing: 2, color: "rgba(255,255,255,0.85)" }}>Motion to Vote On</div>
           </div>
           <div style={{ background: "#fff", padding: 20, display: "flex", flexDirection: "column", gap: 16 }}>
             <div>
-              <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 4 }}>Topic</div>
-              <div style={{ fontSize: 19, fontWeight: "800", color: "#1a1a1a", fontFamily: "'Cardo', serif", lineHeight: 1.3 }}>{sel.title}</div>
+              <div style={{ fontSize: 11, fontWeight: "700", fontFamily: OPEN, textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 4 }}>Topic</div>
+              <div style={{ fontSize: 19, fontWeight: "700", fontFamily: CARDO, color: "#1a1a1a", lineHeight: 1.3 }}>{sel.title}</div>
             </div>
 
             {sel.description && (
               <div>
-                <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 4 }}>Description</div>
-                <p style={{ fontSize: 15, color: "#333", lineHeight: 1.6, margin: 0 }}>{sel.description}</p>
+                <div style={{ fontSize: 11, fontWeight: "700", fontFamily: OPEN, textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 4 }}>Description</div>
+                <p style={{ fontSize: 15, fontFamily: OPEN, color: "#333", lineHeight: 1.6, margin: 0 }}>{sel.description}</p>
               </div>
             )}
 
             <div>
-              <div style={{ fontSize: 11, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 6 }}>Attached Documents</div>
+              <div style={{ fontSize: 11, fontWeight: "700", fontFamily: OPEN, textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 6 }}>Attached Documents</div>
               {sel.fileUrl ? (
-                <a href={sel.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: "bold", color: GOLD, textDecoration: "none", border: `1px solid ${GOLD}`, borderRadius: 6, padding: "6px 14px", background: "#fff" }}>
+                <a href={sel.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: "600", fontFamily: OPEN, color: GOLD, textDecoration: "none", border: `1px solid ${GOLD}`, borderRadius: 6, padding: "6px 14px", background: "#fff" }}>
                   ↗ {sel.fileName || "View attachment"}
                 </a>
               ) : (
-                <div style={{ fontSize: 14, color: "#aaa" }}>None</div>
+                <div style={{ fontSize: 14, fontFamily: OPEN, color: "#aaa" }}>None</div>
               )}
             </div>
           </div>
@@ -251,25 +253,25 @@ export default function App() {
         <div style={{ border: "2px solid #ddd", borderRadius: 10, padding: 20 }}>
           {closed ? (
             <>
-              <div style={{ fontWeight: "800", fontSize: 17, marginBottom: 14, color: "#1a1a1a" }}>Final Results</div>
+              <div style={{ fontWeight: "700", fontSize: 17, fontFamily: CARDO, marginBottom: 14, color: "#1a1a1a" }}>Final Results</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
                 {["Yes", "No", "Abstain"].map(c => (
                   <div key={c} style={{ textAlign: "center", padding: "12px 8px", background: "#f5f5f5", borderRadius: 8 }}>
-                    <div style={{ fontSize: 30, fontWeight: "800", color: CHOICE_COLOR[c] }}>{tally[c]}</div>
-                    <div style={{ fontSize: 13, color: "#555", marginTop: 2 }}>{c}</div>
+                    <div style={{ fontSize: 30, fontWeight: "700", fontFamily: CARDO, color: CHOICE_COLOR[c] }}>{tally[c]}</div>
+                    <div style={{ fontSize: 13, fontFamily: OPEN, color: "#555", marginTop: 2 }}>{c}</div>
                   </div>
                 ))}
               </div>
-              <div style={{ fontWeight: "800", fontSize: 15, marginBottom: 10, color: "#1a1a1a" }}>Individual Votes</div>
+              <div style={{ fontWeight: "700", fontSize: 15, fontFamily: CARDO, marginBottom: 10, color: "#1a1a1a" }}>Individual Votes</div>
               {members.map(m => {
                 const v = sel.votes?.[m];
                 return (
                   <div key={m} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", borderTop: "1px solid #eee" }}>
                     <div>
-                      <div style={{ fontWeight: "700", fontSize: 15 }}>{m}</div>
-                      {v?.note && <div style={{ color: "#555", fontSize: 13, marginTop: 2 }}>"{v.note}"</div>}
+                      <div style={{ fontWeight: "600", fontSize: 15, fontFamily: OPEN }}>{m}</div>
+                      {v?.note && <div style={{ color: "#555", fontSize: 13, fontFamily: OPEN, marginTop: 2 }}>"{v.note}"</div>}
                     </div>
-                    <span style={{ fontWeight: "700", color: v ? CHOICE_COLOR[v.choice] : "#aaa", fontSize: 15, marginLeft: 16, whiteSpace: "nowrap" }}>
+                    <span style={{ fontWeight: "700", fontFamily: OPEN, color: v ? CHOICE_COLOR[v.choice] : "#aaa", fontSize: 15, marginLeft: 16, whiteSpace: "nowrap" }}>
                       {v ? v.choice : "—"}
                     </span>
                   </div>
@@ -277,7 +279,7 @@ export default function App() {
               })}
             </>
           ) : (
-            <div style={{ fontSize: 16, color: "#333" }}>
+            <div style={{ fontSize: 15, fontFamily: OPEN, color: "#333" }}>
               <strong>{voteCount}</strong> of <strong>{sel.totalMembers}</strong> have voted. Results are hidden until voting closes.
             </div>
           )}
@@ -286,7 +288,7 @@ export default function App() {
         {/* Vote form */}
         {!closed && (
           <div style={{ border: `2px solid ${GOLD}`, borderRadius: 10, padding: 20 }}>
-            <div style={{ fontWeight: "800", fontSize: 17, marginBottom: 16, color: "#1a1a1a" }}>Cast a Vote</div>
+            <div style={{ fontWeight: "700", fontSize: 17, fontFamily: CARDO, marginBottom: 16, color: "#1a1a1a" }}>Cast a Vote</div>
             <label style={lStyle}>Who is voting?</label>
             <select value={voteForm.voter} onChange={e => setVoteForm(p => ({ ...p, voter: e.target.value, choice: "", note: "" }))} style={{ ...iStyle, marginBottom: 14, color: voteForm.voter ? "#1a1a1a" : "#999" }}>
               <option value="">— Select your name —</option>
@@ -303,7 +305,7 @@ export default function App() {
                 <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
                   {["Yes", "No", "Abstain"].map(c => (
                     <button key={c} onClick={() => setVoteForm(p => ({ ...p, choice: c }))} style={{
-                      flex: 1, padding: "12px 0", fontSize: 16, fontWeight: "bold",
+                      flex: 1, padding: "12px 0", fontSize: 15, fontWeight: "600", fontFamily: OPEN,
                       border: `2px solid ${voteForm.choice === c ? CHOICE_COLOR[c] : "#ccc"}`,
                       borderRadius: 8, background: voteForm.choice === c ? CHOICE_COLOR[c] : "#fff",
                       color: voteForm.choice === c ? "#fff" : "#333", cursor: "pointer"
@@ -322,7 +324,7 @@ export default function App() {
             )}
 
             {voterAlreadyVoted && (
-              <div style={{ background: "#f0f0f0", borderRadius: 8, padding: "12px 16px", fontSize: 15, color: "#555" }}>
+              <div style={{ background: "#f0f0f0", borderRadius: 8, padding: "12px 16px", fontSize: 15, fontFamily: OPEN, color: "#555" }}>
                 ✓ <strong>{voteForm.voter}</strong> has already voted <strong style={{ color: CHOICE_COLOR[sel.votes[voteForm.voter].choice] }}>{sel.votes[voteForm.voter].choice}</strong> on this topic.
               </div>
             )}
@@ -340,16 +342,16 @@ export default function App() {
 
   // HOME
   return (
-    <div style={{ fontFamily: "'Open Sans', sans-serif", maxWidth: 560, margin: "0 auto", padding: "0 16px 40px" }}>
+    <div style={{ fontFamily: OPEN, maxWidth: 560, margin: "0 auto", padding: "0 16px 40px" }}>
       {toast && (
-        <div style={{ position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", background: "#222", color: "#fff", padding: "10px 24px", borderRadius: 8, fontSize: 14, zIndex: 999, fontFamily: "'Open Sans', sans-serif" }}>
+        <div style={{ position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", background: "#222", color: "#fff", padding: "10px 24px", borderRadius: 8, fontSize: 14, fontFamily: OPEN, zIndex: 999 }}>
           {toast}
         </div>
       )}
 
       <div style={{ padding: "24px 0 20px" }}>
-        <div style={{ fontSize: 12, color: GOLD, textTransform: "uppercase", letterSpacing: 2, fontWeight: "bold" }}>North Star House</div>
-        <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: "800", color: "#1a1a1a", fontFamily: "'Cardo', serif" }}>Board Voting</h1>
+        <div style={{ fontSize: 12, fontFamily: OPEN, color: GOLD, textTransform: "uppercase", letterSpacing: 2, fontWeight: "700" }}>North Star House</div>
+        <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: "700", fontFamily: CARDO, color: "#1a1a1a" }}>Board Voting</h1>
       </div>
 
       <div style={{ marginBottom: 28 }}>
@@ -357,7 +359,7 @@ export default function App() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: "center", color: "#888", padding: "60px 0", fontSize: 15 }}>Loading…</div>
+        <div style={{ textAlign: "center", fontFamily: OPEN, color: "#888", padding: "60px 0", fontSize: 15 }}>Loading…</div>
       ) : (
         <>
           {openTopics.length > 0 && (
@@ -373,7 +375,7 @@ export default function App() {
             </>
           )}
           {topics.length === 0 && (
-            <div style={{ textAlign: "center", color: "#888", padding: "60px 0", fontSize: 15 }}>No topics yet. Add the first one above.</div>
+            <div style={{ textAlign: "center", fontFamily: OPEN, color: "#888", padding: "60px 0", fontSize: 15 }}>No topics yet. Add the first one above.</div>
           )}
         </>
       )}
@@ -394,11 +396,11 @@ function TopicRow({ t, onClick }) {
       onMouseLeave={e => e.currentTarget.style.borderColor = "#ddd"}
     >
       <div>
-        <div style={{ fontSize: 16, fontWeight: "800", color: "#1a1a1a" }}>{t.title}</div>
-        <div style={{ fontSize: 13, color: "#666", marginTop: 3 }}>{voteCount} / {t.totalMembers} voted · {fmtDate(t.dueDate)}</div>
+        <div style={{ fontSize: 16, fontWeight: "700", fontFamily: CARDO, color: "#1a1a1a" }}>{t.title}</div>
+        <div style={{ fontSize: 13, fontFamily: OPEN, color: "#666", marginTop: 3 }}>{voteCount} / {t.totalMembers} voted · {fmtDate(t.dueDate)}</div>
       </div>
       <span style={{
-        fontSize: 13, fontWeight: "bold", padding: "4px 12px", borderRadius: 20, whiteSpace: "nowrap", marginLeft: 12,
+        fontSize: 13, fontFamily: OPEN, fontWeight: "600", padding: "4px 12px", borderRadius: 20, whiteSpace: "nowrap", marginLeft: 12,
         background: closed ? "#eee" : "#fff3cd",
         color: closed ? "#555" : "#856404",
         border: `1px solid ${closed ? "#ccc" : "#856404"}`,
@@ -411,10 +413,10 @@ function TopicRow({ t, onClick }) {
 
 function Page({ title, onBack, children }) {
   return (
-    <div style={{ fontFamily: "'Open Sans', sans-serif", maxWidth: 560, margin: "0 auto", padding: "0 16px 40px" }}>
+    <div style={{ fontFamily: OPEN, maxWidth: 560, margin: "0 auto", padding: "0 16px 40px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "24px 0 20px" }}>
         <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
-        <h2 style={{ fontSize: 22, margin: 0, fontWeight: "800", color: "#1a1a1a" }}>{title}</h2>
+        <h2 style={{ fontSize: 22, margin: 0, fontWeight: "700", fontFamily: CARDO, color: "#1a1a1a" }}>{title}</h2>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{children}</div>
     </div>
@@ -422,11 +424,11 @@ function Page({ title, onBack, children }) {
 }
 
 function Badge({ color, children }) {
-  return <span style={{ fontSize: 12, fontWeight: "bold", padding: "4px 10px", borderRadius: 20, background: color, color: "#fff" }}>{children}</span>;
+  return <span style={{ fontSize: 12, fontFamily: OPEN, fontWeight: "600", padding: "4px 10px", borderRadius: 20, background: color, color: "#fff" }}>{children}</span>;
 }
 
-const btnStyle = { background: GOLD, color: "#fff", border: "none", borderRadius: 8, padding: "12px 18px", fontSize: 15, cursor: "pointer", fontFamily: "'Open Sans', sans-serif", fontWeight: "bold" };
-const outlineBtn = { background: "#fff", border: `2px solid ${GOLD}`, borderRadius: 8, padding: "10px 16px", fontSize: 14, cursor: "pointer", fontFamily: "'Open Sans', sans-serif", color: GOLD, fontWeight: "bold" };
-const iStyle = { width: "100%", border: "2px solid #ccc", borderRadius: 8, padding: "10px 14px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: "'Cardo', serif" };
-const lStyle = { fontSize: 14, fontWeight: "bold", color: "#333", marginBottom: 2, fontFamily: "'Cardo', serif" };
-const secLabel = { fontSize: 12, fontWeight: "800", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 10, fontFamily: "'Open Sans', sans-serif" };
+const btnStyle = { background: GOLD, color: "#fff", border: "none", borderRadius: 8, padding: "12px 18px", fontSize: 15, cursor: "pointer", fontFamily: OPEN, fontWeight: "600" };
+const outlineBtn = { background: "#fff", border: `2px solid ${GOLD}`, borderRadius: 8, padding: "10px 16px", fontSize: 14, cursor: "pointer", fontFamily: OPEN, color: GOLD, fontWeight: "600" };
+const iStyle = { width: "100%", border: "2px solid #ccc", borderRadius: 8, padding: "10px 14px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: OPEN };
+const lStyle = { fontSize: 14, fontWeight: "600", color: "#333", marginBottom: 2, fontFamily: OPEN };
+const secLabel = { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 10, fontFamily: OPEN };
