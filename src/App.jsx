@@ -215,7 +215,7 @@ export default function App() {
         {/* Topic Info Box */}
         <div style={{ borderLeft: `4px solid ${GOLD}`, borderRadius: 4, background: "#fff", padding: "20px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ fontSize: 10, fontWeight: "700", fontFamily: OPEN, textTransform: "uppercase", letterSpacing: 2, color: GOLD }}>Motion</div>
-          <div style={{ fontSize: 21, fontWeight: "700", fontFamily: CARDO, color: "#1a1a1a", lineHeight: 1.3 }}>{sel.title}</div>
+          <div style={{ fontSize: 19, fontWeight: "800", fontFamily: OPEN, color: "#1a1a1a", lineHeight: 1.3 }}>{sel.title}</div>
 
           {sel.description && (
             <p style={{ fontSize: 15, fontFamily: OPEN, color: "#444", lineHeight: 1.7, margin: 0, borderTop: "1px solid #eee", paddingTop: 14 }}>{sel.description}</p>
@@ -243,7 +243,7 @@ export default function App() {
               <div style={{ fontWeight: "700", fontSize: 17, fontFamily: CARDO, marginBottom: 14, color: "#1a1a1a" }}>Final Results</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
                 {["Yes", "No", "Abstain"].map(c => (
-                  <div key={c} style={{ textAlign: "center", padding: "12px 8px", background: "#f5f5f5", borderRadius: 8 }}>
+                  <div key={c} style={{ textAlign: "center", padding: "12px 8px", background: "#fff", borderRadius: 8, border: "1px solid #eee" }}>
                     <div style={{ fontSize: 30, fontWeight: "700", fontFamily: CARDO, color: CHOICE_COLOR[c] }}>{tally[c]}</div>
                     <div style={{ fontSize: 13, fontFamily: OPEN, color: "#555", marginTop: 2 }}>{c}</div>
                   </div>
@@ -383,7 +383,7 @@ function TopicRow({ t, onClick }) {
       onMouseLeave={e => e.currentTarget.style.borderColor = "#ddd"}
     >
       <div>
-        <div style={{ fontSize: 16, fontWeight: "700", fontFamily: CARDO, color: "#1a1a1a" }}>{t.title}</div>
+        <div style={{ fontSize: 16, fontWeight: "800", fontFamily: OPEN, color: "#1a1a1a" }}>{t.title}</div>
         <div style={{ fontSize: 13, fontFamily: OPEN, color: "#666", marginTop: 3 }}>{voteCount} / {t.totalMembers} voted · {fmtDate(t.dueDate)}</div>
       </div>
       <span style={{
