@@ -360,7 +360,7 @@ export default function App() {
 
       <div style={{ maxWidth: APP_MAX_WIDTH, margin: "0 auto", padding: "24px 16px 40px" }}>
       <div style={{ marginBottom: 28 }}>
-        <button onClick={() => setView("new")} style={{ ...btnStyle, width: "100%", padding: "12px" }}>+ New Topic</button>
+        <button onClick={() => setView("new")} style={{ ...btnStyle, width: "100%", padding: "12px" }}>Add Item for Board Vote</button>
       </div>
 
       {loading ? (
