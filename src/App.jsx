@@ -336,12 +336,13 @@ export default function App() {
       )}
 
       <div style={{ background: GOLD, padding: "20px 24px 22px", textAlign: "center" }}>
-        <svg width="38" height="38" viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ marginBottom: 6, display: "block", margin: "0 auto 6px" }}>
-          <path d="M5.7 28.9l3.3-3.1h17.8l3.5 2.6-2.2 2.1H8.4z" stroke="white" strokeWidth="2.1" strokeLinecap="round" strokeLinejoin="round" fill="none" />
-          <path d="M9.3 25.7v4.8" stroke="white" strokeWidth="1.9" strokeLinecap="round" />
-          <path d="M26.8 25.7v3.8" stroke="white" strokeWidth="1.9" strokeLinecap="round" />
-          <rect x="10.4" y="8.8" width="14.6" height="15.7" rx="1.8" transform="rotate(11 10.4 8.8)" stroke="white" strokeWidth="2.1" fill="none" />
-          <path d="M19.1 13.9l1 2.1 2.3.3-1.7 1.6.45 2.3-2-1.1-2 1.1.45-2.3-1.7-1.6 2.3-.3z" stroke="white" strokeWidth="1.5" strokeLinejoin="round" fill="none" />
+        <svg width="42" height="42" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ display: "block", margin: "0 auto 6px" }}>
+          {/* Box */}
+          <rect x="4" y="22" width="32" height="15" rx="2" stroke="white" strokeWidth="2.5" fill="none"/>
+          {/* Paper going into box */}
+          <rect x="13" y="3" width="14" height="22" rx="1.5" stroke="white" strokeWidth="2.5" fill="none"/>
+          {/* 5-point star centered at (20,13) */}
+          <path d="M20 9 L20.94 11.71 L23.80 11.76 L21.52 13.49 L22.35 16.24 L20 14.6 L17.65 16.24 L18.48 13.49 L16.20 11.76 L19.06 11.71 Z" stroke="white" strokeWidth="1.5" strokeLinejoin="round" fill="none"/>
         </svg>
         <div style={{ fontSize: 10, fontFamily: SERIF, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 4 }}>North Star House</div>
         <h1 style={{ fontSize: 26, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>Board Voting</h1>
