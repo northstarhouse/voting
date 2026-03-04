@@ -2,14 +2,14 @@ import { useState, useEffect } from "react";
 
 const cardoLink = document.createElement("link");
 cardoLink.rel = "stylesheet";
-cardoLink.href = "https://fonts.googleapis.com/css2?family=Cardo:ital,wght@0,400;0,700;1,400&family=Open+Sans:wght@400;600;700;800&display=swap";
+cardoLink.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap";
 document.head.appendChild(cardoLink);
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrsP-Nnq_hp5QWWks6BA5ZnuS2B9E_KQyFskRQC0PSehb6NcspJhyO4wlqD3-VfsEwxg/exec";
 const INITIAL_MEMBERS = ["Ken", "Wyn", "Paula", "Rick", "Jeff", "Rich"];
 const GOLD = "#886c44";
-const OPEN = "'Open Sans', sans-serif";
-const CARDO = "'Cardo', serif";
+const OPEN = "'Inter', sans-serif";
+const CARDO = "'Inter', sans-serif";
 
 function useLS(key, def) {
   const [val, setVal] = useState(() => {
