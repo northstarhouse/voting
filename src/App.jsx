@@ -59,7 +59,7 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
   const [view, setView] = useState("home");
   const [selId, setSelId] = useState(null);
-  const [form, setForm] = useState({ title: "", description: "", dueDate: "", fileUrl: "", fileName: "" });
+  const [form, setForm] = useState({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
   const [voteForm, setVoteForm] = useState({ voter: "", choice: "", note: "" });
   const [newMember, setNewMember] = useState("");
   const [toast, setToast] = useState(null);
@@ -92,12 +92,13 @@ export default function App() {
         action: "addTopic",
         title: form.title.trim(),
         description: form.description.trim(),
+        submittedBy: form.submittedBy.trim(),
         dueDate: form.dueDate,
         totalMembers: members.length,
         fileUrl: form.fileUrl || "",
         fileName: form.fileName || "",
       });
-      setForm({ title: "", description: "", dueDate: "", fileUrl: "", fileName: "" });
+      setForm({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
       setUploadStatus("idle");
       setView("home");
       toast_("Topic added.");
@@ -184,6 +185,9 @@ export default function App() {
       <label style={lStyle}>Description (optional)</label>
       <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
         placeholder="Additional context..." rows={4} style={{ ...iStyle, resize: "vertical" }} />
+      <label style={lStyle}>Submitted by (optional)</label>
+      <input value={form.submittedBy} onChange={e => setForm(p => ({ ...p, submittedBy: e.target.value }))}
+        placeholder="Name" style={iStyle} />
       <label style={lStyle}>Due Date (optional)</label>
       <input type="date" value={form.dueDate} onChange={e => setForm(p => ({ ...p, dueDate: e.target.value }))} style={iStyle} />
       <label style={lStyle}>Attachment (optional)</label>
@@ -229,6 +233,11 @@ export default function App() {
               </a>
             </div>
           )}
+          {sel.submittedBy && (
+            <div style={{ alignSelf: "flex-end", fontSize: 12, fontFamily: OPEN, color: "#666" }}>
+              Submitted by: <strong style={{ color: "#444" }}>{sel.submittedBy}</strong>
+            </div>
+          )}
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
@@ -238,7 +247,7 @@ export default function App() {
         </div>
 
         {/* Results */}
-        <div style={{ border: "2px solid #ddd", borderRadius: 10, padding: 20 }}>
+        <div style={{ border: "2px solid #ddd", borderRadius: 10, padding: 20, background: "#fff" }}>
           {closed ? (
             <>
               <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, marginBottom: 14, color: "#1a1a1a" }}>Final Results</div>
