@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Voting box with star ballot">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f7f0e3" />
+      <stop offset="100%" stop-color="#ddc7a5" />
+    </linearGradient>
+    <linearGradient id="box" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#9a7a50" />
+      <stop offset="100%" stop-color="#7e623e" />
+    </linearGradient>
+  </defs>
+
+  <rect x="2" y="2" width="60" height="60" rx="12" fill="url(#bg)" />
+
+  <rect x="17" y="14" width="30" height="24" rx="3" fill="#fffdf7" stroke="#886c44" stroke-width="2.5" transform="rotate(-6 32 26)" />
+  <path d="M32 21l1.7 3.6 4 .5-3 2.8.8 4-3.5-1.9-3.5 1.9.8-4-3-2.8 4-.5z" fill="#d6a63f" stroke="#886c44" stroke-width="1" stroke-linejoin="round" transform="rotate(-6 32 26)" />
+
+  <rect x="11" y="35" width="42" height="17" rx="3" fill="url(#box)" stroke="#5d462d" stroke-width="2" />
+  <rect x="19" y="38" width="26" height="3.5" rx="1.75" fill="#f5e6cf" />
+  <rect x="12.5" y="47" width="39" height="3" rx="1.5" fill="#6f5536" opacity="0.5" />
+</svg>
