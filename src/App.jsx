@@ -98,9 +98,9 @@ export default function App() {
       });
       setForm({ title: "", description: "", dueDate: "", fileUrl: "", fileName: "" });
       setUploadStatus("idle");
-      await loadTopics();
       setView("home");
       toast_("Topic added.");
+      loadTopics();
     } catch (err) {
       toast_(err.message || "Failed to add topic.");
     } finally {
@@ -130,9 +130,9 @@ export default function App() {
     try {
       await api({ action: "castVote", topicId, voter: voteForm.voter, choice: voteForm.choice, note: voteForm.note });
       setVoteForm({ voter: "", choice: "", note: "" });
-      await loadTopics();
       setView("home");
       toast_("Vote recorded.");
+      loadTopics();
     } catch (err) {
       toast_(err.message || "Failed to cast vote.");
     } finally {
