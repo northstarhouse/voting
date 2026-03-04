@@ -11,6 +11,7 @@ const GOLD = "#886c44";
 const CREAM = "#fdfbf8";
 const OPEN = "'Manrope', Tahoma, sans-serif";
 const SERIF = "'Cardo', Georgia, serif";
+const APP_MAX_WIDTH = 780;
 
 function useLS(key, def) {
   const [val, setVal] = useState(() => {
@@ -357,7 +358,7 @@ export default function App() {
         <h1 style={{ fontSize: 26, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>Board Voting</h1>
       </div>
 
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "24px 16px 40px" }}>
+      <div style={{ maxWidth: APP_MAX_WIDTH, margin: "0 auto", padding: "24px 16px 40px" }}>
       <div style={{ marginBottom: 28 }}>
         <button onClick={() => setView("new")} style={{ ...btnStyle, width: "100%", padding: "12px" }}>+ New Topic</button>
       </div>
@@ -424,7 +425,7 @@ function Page({ title, onBack, children }) {
         <div style={{ fontSize: 10, fontFamily: SERIF, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 2 }}>North Star House</div>
         <h2 style={{ fontSize: 22, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>{title || "Board Voting"}</h2>
       </div>
-      <div style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 40px", display: "flex", flexDirection: "column", gap: 12 }}>{children}</div>
+      <div style={{ maxWidth: APP_MAX_WIDTH, margin: "0 auto", padding: "20px 16px 40px", display: "flex", flexDirection: "column", gap: 12 }}>{children}</div>
     </div>
   );
 }
