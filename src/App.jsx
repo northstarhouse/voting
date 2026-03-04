@@ -2,14 +2,15 @@ import { useState, useEffect } from "react";
 
 const cardoLink = document.createElement("link");
 cardoLink.rel = "stylesheet";
-cardoLink.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap";
+cardoLink.href = "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=EB+Garamond:wght@400;500;600&display=swap";
 document.head.appendChild(cardoLink);
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrsP-Nnq_hp5QWWks6BA5ZnuS2B9E_KQyFskRQC0PSehb6NcspJhyO4wlqD3-VfsEwxg/exec";
 const INITIAL_MEMBERS = ["Ken", "Wyn", "Paula", "Rick", "Jeff", "Rich"];
-const GOLD = "#886c44";
+const GOLD = "#7a6240";
+const CREAM = "#f5f0e8";
 const OPEN = "'Inter', sans-serif";
-const CARDO = "'Inter', sans-serif";
+const SERIF = "'EB Garamond', serif";
 
 function useLS(key, def) {
   const [val, setVal] = useState(() => {
@@ -240,16 +241,16 @@ export default function App() {
         <div style={{ border: "2px solid #ddd", borderRadius: 10, padding: 20 }}>
           {closed ? (
             <>
-              <div style={{ fontWeight: "700", fontSize: 17, fontFamily: CARDO, marginBottom: 14, color: "#1a1a1a" }}>Final Results</div>
+              <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, marginBottom: 14, color: "#1a1a1a" }}>Final Results</div>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
                 {["Yes", "No", "Abstain"].map(c => (
                   <div key={c} style={{ textAlign: "center", padding: "12px 8px", background: "#fff", borderRadius: 8, border: "1px solid #eee" }}>
-                    <div style={{ fontSize: 30, fontWeight: "700", fontFamily: CARDO, color: CHOICE_COLOR[c] }}>{tally[c]}</div>
+                    <div style={{ fontSize: 30, fontWeight: "700", fontFamily: SERIF, color: CHOICE_COLOR[c] }}>{tally[c]}</div>
                     <div style={{ fontSize: 13, fontFamily: OPEN, color: "#555", marginTop: 2 }}>{c}</div>
                   </div>
                 ))}
               </div>
-              <div style={{ fontWeight: "700", fontSize: 15, fontFamily: CARDO, marginBottom: 10, color: "#1a1a1a" }}>Individual Votes</div>
+              <div style={{ fontWeight: "700", fontSize: 15, fontFamily: SERIF, marginBottom: 10, color: "#1a1a1a" }}>Individual Votes</div>
               {members.map(m => {
                 const v = sel.votes?.[m];
                 return (
@@ -275,7 +276,7 @@ export default function App() {
         {/* Vote form */}
         {!closed && (
           <div style={{ border: `2px solid ${GOLD}`, borderRadius: 10, padding: 20, background: "#fff" }}>
-            <div style={{ fontWeight: "700", fontSize: 17, fontFamily: CARDO, marginBottom: 16, color: "#1a1a1a" }}>Cast a Vote</div>
+            <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, marginBottom: 16, color: "#1a1a1a" }}>Cast a Vote</div>
             <label style={{ ...lStyle, display: "block", marginBottom: 14 }}>Who is voting?</label>
             <select value={voteForm.voter} onChange={e => setVoteForm(p => ({ ...p, voter: e.target.value, choice: "", note: "" }))} style={{ ...iStyle, marginBottom: 14, color: voteForm.voter ? "#1a1a1a" : "#999" }}>
               <option value="">— Select your name —</option>
@@ -327,18 +328,19 @@ export default function App() {
 
   // HOME
   return (
-    <div style={{ fontFamily: OPEN, maxWidth: 560, margin: "0 auto", padding: "0 16px 40px" }}>
+    <div style={{ fontFamily: OPEN, minHeight: "100vh", background: CREAM }}>
       {toast && (
         <div style={{ position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)", background: "#222", color: "#fff", padding: "10px 24px", borderRadius: 8, fontSize: 14, fontFamily: OPEN, zIndex: 999 }}>
           {toast}
         </div>
       )}
 
-      <div style={{ padding: "24px 0 20px" }}>
-        <div style={{ fontSize: 12, fontFamily: OPEN, color: GOLD, textTransform: "uppercase", letterSpacing: 2, fontWeight: "700" }}>North Star House</div>
-        <h1 style={{ fontSize: 24, margin: "2px 0 0", fontWeight: "700", fontFamily: CARDO, color: "#1a1a1a" }}>Board Voting</h1>
+      <div style={{ background: GOLD, padding: "20px 24px 22px" }}>
+        <div style={{ fontSize: 11, fontFamily: OPEN, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 3, fontWeight: "600", marginBottom: 4 }}>North Star House</div>
+        <h1 style={{ fontSize: 26, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>Board Voting</h1>
       </div>
 
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "24px 16px 40px" }}>
       <div style={{ marginBottom: 28 }}>
         <button onClick={() => setView("new")} style={{ ...btnStyle, width: "100%", padding: "12px" }}>+ New Topic</button>
       </div>
@@ -364,6 +366,7 @@ export default function App() {
           )}
         </>
       )}
+      </div>
     </div>
   );
 }
@@ -398,12 +401,15 @@ function TopicRow({ t, onClick }) {
 
 function Page({ title, onBack, children }) {
   return (
-    <div style={{ fontFamily: OPEN, maxWidth: 560, margin: "0 auto", padding: "0 16px 40px" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "24px 0 20px" }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", fontSize: 22, cursor: "pointer", padding: 0, lineHeight: 1 }}>←</button>
-        <h2 style={{ fontSize: 22, margin: 0, fontWeight: "700", fontFamily: CARDO, color: "#1a1a1a" }}>{title}</h2>
+    <div style={{ fontFamily: OPEN, minHeight: "100vh", background: CREAM }}>
+      <div style={{ background: GOLD, padding: "16px 20px" }}>
+        <div style={{ fontSize: 11, fontFamily: OPEN, color: "rgba(255,255,255,0.7)", textTransform: "uppercase", letterSpacing: 3, fontWeight: "600", marginBottom: 4 }}>North Star House</div>
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <button onClick={onBack} style={{ background: "none", border: "none", color: "#fff", fontSize: 20, cursor: "pointer", padding: 0, lineHeight: 1, opacity: 0.85 }}>←</button>
+          <h2 style={{ fontSize: 22, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>{title || "Board Voting"}</h2>
+        </div>
       </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>{children}</div>
+      <div style={{ maxWidth: 560, margin: "0 auto", padding: "20px 16px 40px", display: "flex", flexDirection: "column", gap: 12 }}>{children}</div>
     </div>
   );
 }
