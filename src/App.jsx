@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const cardoLink = document.createElement("link");
 cardoLink.rel = "stylesheet";
@@ -46,6 +46,14 @@ async function api(payload) {
   return data;
 }
 
+function renderText(text) {
+  return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
+    if (part.startsWith("*") && part.endsWith("*")) return <em key={i}>{part.slice(1, -1)}</em>;
+    return part;
+  });
+}
+
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -67,6 +75,18 @@ export default function App() {
   const [newMember, setNewMember] = useState("");
   const [toast, setToast] = useState(null);
   const [uploadStatus, setUploadStatus] = useState("idle");
+  const descRef = useRef(null);
+
+  function wrapSelection(marker) {
+    const el = descRef.current;
+    if (!el) return;
+    const { selectionStart: s, selectionEnd: e, value } = el;
+    const selected = value.slice(s, e);
+    const wrapped = marker + selected + marker;
+    const next = value.slice(0, s) + wrapped + value.slice(e);
+    setForm(p => ({ ...p, description: next }));
+    setTimeout(() => { el.focus(); el.setSelectionRange(s + marker.length, e + marker.length); }, 0);
+  }
 
   function toast_(msg) { setToast(msg); setTimeout(() => setToast(null), 6000); }
 
@@ -186,8 +206,14 @@ export default function App() {
       <label style={lStyle}>Title *</label>
       <input value={form.title} onChange={e => setForm(p => ({ ...p, title: e.target.value }))} style={iStyle} />
       <label style={lStyle}>Description (optional)</label>
-      <textarea value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-        placeholder="Additional context..." rows={4} style={{ ...iStyle, resize: "vertical" }} />
+      <div style={{ border: "2px solid #ccc", borderRadius: 8, overflow: "hidden" }}>
+        <div style={{ display: "flex", gap: 4, padding: "6px 8px", background: "#f5f5f5", borderBottom: "1px solid #ddd" }}>
+          <button type="button" onMouseDown={e => { e.preventDefault(); wrapSelection("**"); }} style={{ fontWeight: "700", fontSize: 14, fontFamily: OPEN, background: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: "2px 10px", cursor: "pointer" }}>B</button>
+          <button type="button" onMouseDown={e => { e.preventDefault(); wrapSelection("*"); }} style={{ fontStyle: "italic", fontSize: 14, fontFamily: OPEN, background: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: "2px 10px", cursor: "pointer" }}>I</button>
+        </div>
+        <textarea ref={descRef} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
+          placeholder="Additional context..." rows={4} style={{ ...iStyle, border: "none", borderRadius: 0, resize: "vertical" }} />
+      </div>
       <label style={lStyle}>Submitted by (optional)</label>
       <input value={form.submittedBy} onChange={e => setForm(p => ({ ...p, submittedBy: e.target.value }))}
         placeholder="Name" style={iStyle} />
@@ -226,7 +252,7 @@ export default function App() {
           <div style={{ fontSize: 19, fontWeight: "800", fontFamily: OPEN, color: "#1a1a1a", lineHeight: 1.3 }}>{sel.title}</div>
 
           {sel.description && (
-            <p style={{ fontSize: 15, fontFamily: OPEN, color: "#444", lineHeight: 1.7, margin: 0, borderTop: "1px solid #eee", paddingTop: 14, whiteSpace: "pre-wrap" }}>{sel.description}</p>
+            <p style={{ fontSize: 15, fontFamily: OPEN, color: "#444", lineHeight: 1.7, margin: 0, borderTop: "1px solid #eee", paddingTop: 14, whiteSpace: "pre-wrap" }}>{renderText(sel.description)}</p>
           )}
 
           {sel.fileUrl && (
