@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import "./App.css";
 
 const cardoLink = document.createElement("link");
 cardoLink.rel = "stylesheet";
@@ -77,16 +78,31 @@ export default function App() {
   const [uploadStatus, setUploadStatus] = useState("idle");
   const descRef = useRef(null);
 
-  function wrapSelection(marker) {
-    const el = descRef.current;
-    if (!el) return;
-    const { selectionStart: s, selectionEnd: e, value } = el;
-    const selected = value.slice(s, e);
-    const wrapped = marker + selected + marker;
-    const next = value.slice(0, s) + wrapped + value.slice(e);
-    setForm(p => ({ ...p, description: next }));
-    setTimeout(() => { el.focus(); el.setSelectionRange(s + marker.length, e + marker.length); }, 0);
+  function htmlToMd(html) {
+    return html
+      .replace(/<strong>([\s\S]*?)<\/strong>/gi, '**$1**')
+      .replace(/<em>([\s\S]*?)<\/em>/gi, '*$1*')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<div>/gi, '\n').replace(/<\/div>/gi, '')
+      .replace(/<[^>]+>/g, '');
   }
+
+  function mdToHtml(md) {
+    return md
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/\n/g, '<br>');
+  }
+
+  function applyFormat(cmd) {
+    descRef.current.focus();
+    document.execCommand(cmd, false, null);
+    setForm(p => ({ ...p, description: htmlToMd(descRef.current.innerHTML) }));
+  }
+
+  useEffect(() => {
+    if (form.description === "" && descRef.current) descRef.current.innerHTML = "";
+  }, [form.description]);
 
   function toast_(msg) { setToast(msg); setTimeout(() => setToast(null), 6000); }
 
@@ -208,11 +224,17 @@ export default function App() {
       <label style={lStyle}>Description (optional)</label>
       <div style={{ border: "2px solid #ccc", borderRadius: 8, overflow: "hidden" }}>
         <div style={{ display: "flex", gap: 4, padding: "6px 8px", background: "#f5f5f5", borderBottom: "1px solid #ddd" }}>
-          <button type="button" onMouseDown={e => { e.preventDefault(); wrapSelection("**"); }} style={{ fontWeight: "700", fontSize: 14, fontFamily: OPEN, background: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: "2px 10px", cursor: "pointer" }}>B</button>
-          <button type="button" onMouseDown={e => { e.preventDefault(); wrapSelection("*"); }} style={{ fontStyle: "italic", fontSize: 14, fontFamily: OPEN, background: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: "2px 10px", cursor: "pointer" }}>I</button>
+          <button type="button" onMouseDown={e => { e.preventDefault(); applyFormat("bold"); }} style={{ fontWeight: "700", fontSize: 14, fontFamily: OPEN, background: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: "2px 10px", cursor: "pointer" }}>B</button>
+          <button type="button" onMouseDown={e => { e.preventDefault(); applyFormat("italic"); }} style={{ fontStyle: "italic", fontSize: 14, fontFamily: OPEN, background: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: "2px 10px", cursor: "pointer" }}>I</button>
         </div>
-        <textarea ref={descRef} value={form.description} onChange={e => setForm(p => ({ ...p, description: e.target.value }))}
-          placeholder="Additional context..." rows={4} style={{ ...iStyle, border: "none", borderRadius: 0, resize: "vertical" }} />
+        <div
+          ref={descRef}
+          contentEditable
+          suppressContentEditableWarning
+          onInput={() => setForm(p => ({ ...p, description: htmlToMd(descRef.current.innerHTML) }))}
+          data-placeholder="Additional context..."
+          style={{ minHeight: 90, padding: "10px 14px", fontSize: 15, fontFamily: OPEN, outline: "none", lineHeight: 1.6, color: "#1a1a1a", whiteSpace: "pre-wrap" }}
+        />
       </div>
       <label style={lStyle}>Submitted by (optional)</label>
       <input value={form.submittedBy} onChange={e => setForm(p => ({ ...p, submittedBy: e.target.value }))}
