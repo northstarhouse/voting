@@ -48,7 +48,7 @@ async function api(payload) {
 }
 
 function renderText(text) {
-  return text.split(/(\*\*[^*]+\*\*|\*[^*]+\*)/g).map((part, i) => {
+  return text.split(/(\*\*[\s\S]+?\*\*|\*[\s\S]+?\*)/g).map((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
     if (part.startsWith("*") && part.endsWith("*")) return <em key={i}>{part.slice(1, -1)}</em>;
     return part;
@@ -80,8 +80,8 @@ export default function App() {
 
   function htmlToMd(html) {
     return html
-      .replace(/<strong>([\s\S]*?)<\/strong>/gi, '**$1**')
-      .replace(/<em>([\s\S]*?)<\/em>/gi, '*$1*')
+      .replace(/<(strong|b)>([\s\S]*?)<\/(strong|b)>/gi, '**$2**')
+      .replace(/<(em|i)>([\s\S]*?)<\/(em|i)>/gi, '*$2*')
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<div>/gi, '\n').replace(/<\/div>/gi, '')
       .replace(/<[^>]+>/g, '');
