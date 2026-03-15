@@ -89,6 +89,28 @@ export default function App() {
   const [uploadStatus, setUploadStatus] = useState("idle");
   const descRef = useRef(null);
 
+  function pasteAsMarkdown(e) {
+    const html = e.clipboardData.getData('text/html');
+    if (!html) return; // no HTML, let plain text paste normally
+    e.preventDefault();
+    const md = html
+      .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
+      .replace(/<(strong|b)>([\s\S]*?)<\/(strong|b)>/gi, '**$2**')
+      .replace(/<(em|i)>([\s\S]*?)<\/(em|i)>/gi, '*$2*')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/p>/gi, '\n').replace(/<p[^>]*>/gi, '')
+      .replace(/<\/div>/gi, '\n').replace(/<div[^>]*>/gi, '')
+      .replace(/<\/li>/gi, '\n').replace(/<li[^>]*>/gi, '• ')
+      .replace(/<[^>]+>/g, '')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim();
+    const el = descRef.current;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    el.value = el.value.slice(0, start) + md + el.value.slice(end);
+    el.setSelectionRange(start + md.length, start + md.length);
+  }
+
   function applyFormat(cmd) {
     const el = descRef.current;
     const start = el.selectionStart;
@@ -232,6 +254,7 @@ export default function App() {
           ref={descRef}
           placeholder="Additional context..."
           rows={4}
+          onPaste={pasteAsMarkdown}
           style={{ width: "100%", padding: "10px 14px", fontSize: 15, fontFamily: OPEN, outline: "none", lineHeight: 1.6, color: "#1a1a1a", border: "none", resize: "vertical", boxSizing: "border-box", background: "transparent" }}
         />
       </div>
