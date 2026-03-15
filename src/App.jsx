@@ -92,6 +92,7 @@ export default function App() {
     return html
       .replace(/<(strong|b)>([\s\S]*?)<\/(strong|b)>/gi, '**$2**')
       .replace(/<(em|i)>([\s\S]*?)<\/(em|i)>/gi, '*$2*')
+      .replace(/<div><br\s*\/?><\/div>/gi, '\n')
       .replace(/<br\s*\/?>/gi, '\n')
       .replace(/<div>/gi, '\n').replace(/<\/div>/gi, '')
       .replace(/<[^>]+>/g, '');
