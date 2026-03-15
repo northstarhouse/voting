@@ -49,6 +49,7 @@ async function api(payload) {
 
 function renderText(text) {
   if (!text) return null;
+  text = text.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
   const result = [];
   text.split(/(\*\*[\s\S]+?\*\*|\*[\s\S]+?\*)/g).forEach((part, i) => {
     if (part.startsWith("**") && part.endsWith("**")) {
@@ -90,6 +91,7 @@ export default function App() {
 
   function htmlToMd(html) {
     return html
+      .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
       .replace(/<(strong|b)>([\s\S]*?)<\/(strong|b)>/gi, '**$2**')
       .replace(/<(em|i)>([\s\S]*?)<\/(em|i)>/gi, '*$2*')
       .replace(/<div><br\s*\/?><\/div>/gi, '\n')
