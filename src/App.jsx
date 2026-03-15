@@ -48,11 +48,21 @@ async function api(payload) {
 }
 
 function renderText(text) {
-  return text.split(/(\*\*[\s\S]+?\*\*|\*[\s\S]+?\*)/g).map((part, i) => {
-    if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
-    if (part.startsWith("*") && part.endsWith("*")) return <em key={i}>{part.slice(1, -1)}</em>;
-    return part;
+  if (!text) return null;
+  const result = [];
+  text.split(/(\*\*[\s\S]+?\*\*|\*[\s\S]+?\*)/g).forEach((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) {
+      result.push(<strong key={i}>{part.slice(2, -2)}</strong>);
+    } else if (part.startsWith("*") && part.endsWith("*")) {
+      result.push(<em key={i}>{part.slice(1, -1)}</em>);
+    } else {
+      part.split('\n').forEach((line, j) => {
+        if (j > 0) result.push(<br key={`${i}-${j}`} />);
+        result.push(line);
+      });
+    }
   });
+  return result;
 }
 
 function fileToBase64(file) {
@@ -97,12 +107,7 @@ export default function App() {
   function applyFormat(cmd) {
     descRef.current.focus();
     document.execCommand(cmd, false, null);
-    setForm(p => ({ ...p, description: htmlToMd(descRef.current.innerHTML) }));
   }
-
-  useEffect(() => {
-    if (form.description === "" && descRef.current) descRef.current.innerHTML = "";
-  }, [form.description]);
 
   function toast_(msg) { setToast(msg); setTimeout(() => setToast(null), 6000); }
 
@@ -127,10 +132,11 @@ export default function App() {
     if (!form.title.trim()) return;
     setSyncing(true);
     try {
+      const description = htmlToMd(descRef.current?.innerHTML || "").trim();
       await api({
         action: "addTopic",
         title: form.title.trim(),
-        description: form.description.trim(),
+        description,
         submittedBy: form.submittedBy.trim(),
         dueDate: form.dueDate,
         totalMembers: members.length,
@@ -138,6 +144,7 @@ export default function App() {
         fileName: form.fileName || "",
       });
       setForm({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
+      if (descRef.current) descRef.current.innerHTML = "";
       setUploadStatus("idle");
       setView("home");
       toast_("Topic added.");
@@ -231,9 +238,8 @@ export default function App() {
           ref={descRef}
           contentEditable
           suppressContentEditableWarning
-          onInput={() => setForm(p => ({ ...p, description: htmlToMd(descRef.current.innerHTML) }))}
           data-placeholder="Additional context..."
-          style={{ minHeight: 90, padding: "10px 14px", fontSize: 15, fontFamily: OPEN, outline: "none", lineHeight: 1.6, color: "#1a1a1a", whiteSpace: "pre-wrap" }}
+          style={{ minHeight: 90, padding: "10px 14px", fontSize: 15, fontFamily: OPEN, outline: "none", lineHeight: 1.6, color: "#1a1a1a" }}
         />
       </div>
       <label style={lStyle}>Submitted by (optional)</label>
@@ -274,7 +280,7 @@ export default function App() {
           <div style={{ fontSize: 19, fontWeight: "800", fontFamily: OPEN, color: "#1a1a1a", lineHeight: 1.3 }}>{sel.title}</div>
 
           {sel.description && (
-            <p style={{ fontSize: 15, fontFamily: OPEN, color: "#444", lineHeight: 1.7, margin: 0, borderTop: "1px solid #eee", paddingTop: 14, whiteSpace: "pre-wrap" }}>{renderText(sel.description)}</p>
+            <p style={{ fontSize: 15, fontFamily: OPEN, color: "#444", lineHeight: 1.7, margin: 0, borderTop: "1px solid #eee", paddingTop: 14 }}>{renderText(sel.description)}</p>
           )}
 
           {sel.fileUrl && (
