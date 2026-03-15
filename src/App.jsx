@@ -66,6 +66,31 @@ function renderText(text) {
   return result;
 }
 
+// Convert arbitrary HTML to simple safe HTML (only strong/em/br)
+function cleanHtml(html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  function walk(node) {
+    if (node.nodeType === 3) return node.textContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const tag = (node.tagName || '').toLowerCase();
+    if (['script','style','head'].includes(tag)) return '';
+    if (tag === 'br') return '<br>';
+    const style = node.getAttribute?.('style') || '';
+    const isBold = ['b','strong','h1','h2','h3','h4','h5','h6'].includes(tag) ||
+      /font-weight\s*:\s*(bold|[6-9]\d\d|[1-9]\d{3,})/i.test(style);
+    const isItalic = ['i','em'].includes(tag) || /font-style\s*:\s*italic/i.test(style);
+    const isBlock = ['p','div','h1','h2','h3','h4','h5','h6','li','tr','td'].includes(tag);
+    let out = Array.from(node.childNodes).map(walk).join('');
+    if (isItalic) out = `<em>${out}</em>`;
+    if (isBold) out = `<strong>${out}</strong>`;
+    if (isBlock) out = out + '<br>';
+    return out;
+  }
+  return Array.from(tmp.childNodes).map(walk).join('')
+    .replace(/(<br>){3,}/g, '<br><br>')
+    .replace(/^(<br>)+|(<br>)+$/g, '');
+}
+
 function fileToBase64(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -89,40 +114,27 @@ export default function App() {
   const [uploadStatus, setUploadStatus] = useState("idle");
   const descRef = useRef(null);
 
-  function pasteAsMarkdown(e) {
-    const html = e.clipboardData.getData('text/html');
-    if (!html) return; // no HTML, let plain text paste normally
+  function handlePaste(e) {
     e.preventDefault();
-    const md = html
-      .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-      .replace(/<(strong|b)>([\s\S]*?)<\/(strong|b)>/gi, '**$2**')
-      .replace(/<(em|i)>([\s\S]*?)<\/(em|i)>/gi, '*$2*')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<\/p>/gi, '\n').replace(/<p[^>]*>/gi, '')
-      .replace(/<\/div>/gi, '\n').replace(/<div[^>]*>/gi, '')
-      .replace(/<\/li>/gi, '\n').replace(/<li[^>]*>/gi, '• ')
-      .replace(/<[^>]+>/g, '')
-      .replace(/\n{3,}/g, '\n\n')
-      .trim();
-    const el = descRef.current;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    el.value = el.value.slice(0, start) + md + el.value.slice(end);
-    el.setSelectionRange(start + md.length, start + md.length);
+    const html = e.clipboardData.getData('text/html');
+    const text = e.clipboardData.getData('text/plain');
+    const content = html ? cleanHtml(html)
+      : text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    const sel = window.getSelection();
+    if (sel.rangeCount) {
+      sel.deleteFromDocument();
+      const range = sel.getRangeAt(0);
+      const frag = range.createContextualFragment(content);
+      range.insertNode(frag);
+      range.collapse(false);
+      sel.removeAllRanges();
+      sel.addRange(range);
+    }
   }
 
   function applyFormat(cmd) {
-    const el = descRef.current;
-    const start = el.selectionStart;
-    const end = el.selectionEnd;
-    const marker = cmd === "bold" ? "**" : "*";
-    const selected = el.value.slice(start, end);
-    const before = el.value.slice(0, start);
-    const after = el.value.slice(end);
-    const newVal = before + marker + selected + marker + after;
-    el.value = newVal;
-    el.focus();
-    el.setSelectionRange(start + marker.length, end + marker.length);
+    descRef.current.focus();
+    document.execCommand(cmd, false, null);
   }
 
   function toast_(msg) { setToast(msg); setTimeout(() => setToast(null), 6000); }
@@ -148,7 +160,7 @@ export default function App() {
     if (!form.title.trim()) return;
     setSyncing(true);
     try {
-      const description = (descRef.current?.value || "").trim();
+      const description = cleanHtml(descRef.current?.innerHTML || "");
       await api({
         action: "addTopic",
         title: form.title.trim(),
@@ -160,7 +172,7 @@ export default function App() {
         fileName: form.fileName || "",
       });
       setForm({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
-      if (descRef.current) descRef.current.value = "";
+      if (descRef.current) descRef.current.innerHTML = "";
       setUploadStatus("idle");
       setView("home");
       toast_("Topic added.");
@@ -250,12 +262,13 @@ export default function App() {
           <button type="button" onMouseDown={e => { e.preventDefault(); applyFormat("bold"); }} style={{ fontWeight: "700", fontSize: 14, fontFamily: OPEN, background: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: "2px 10px", cursor: "pointer" }}>B</button>
           <button type="button" onMouseDown={e => { e.preventDefault(); applyFormat("italic"); }} style={{ fontStyle: "italic", fontSize: 14, fontFamily: OPEN, background: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: "2px 10px", cursor: "pointer" }}>I</button>
         </div>
-        <textarea
+        <div
           ref={descRef}
-          placeholder="Additional context..."
-          rows={4}
-          onPaste={pasteAsMarkdown}
-          style={{ width: "100%", padding: "10px 14px", fontSize: 15, fontFamily: OPEN, outline: "none", lineHeight: 1.6, color: "#1a1a1a", border: "none", resize: "vertical", boxSizing: "border-box", background: "transparent" }}
+          contentEditable
+          suppressContentEditableWarning
+          onPaste={handlePaste}
+          data-placeholder="Additional context..."
+          style={{ minHeight: 90, padding: "10px 14px", fontSize: 15, fontFamily: OPEN, outline: "none", lineHeight: 1.6, color: "#1a1a1a" }}
         />
       </div>
       <label style={lStyle}>Submitted by (optional)</label>
@@ -296,7 +309,9 @@ export default function App() {
           <div style={{ fontSize: 19, fontWeight: "800", fontFamily: OPEN, color: "#1a1a1a", lineHeight: 1.3 }}>{sel.title}</div>
 
           {sel.description && (
-            <p style={{ fontSize: 15, fontFamily: OPEN, color: "#444", lineHeight: 1.7, margin: 0, borderTop: "1px solid #eee", paddingTop: 14 }}>{renderText(sel.description)}</p>
+            /<[a-z]/i.test(sel.description)
+              ? <p style={{ fontSize: 15, fontFamily: OPEN, color: "#444", lineHeight: 1.7, margin: 0, borderTop: "1px solid #eee", paddingTop: 14 }} dangerouslySetInnerHTML={{ __html: sel.description }} />
+              : <p style={{ fontSize: 15, fontFamily: OPEN, color: "#444", lineHeight: 1.7, margin: 0, borderTop: "1px solid #eee", paddingTop: 14 }}>{renderText(sel.description)}</p>
           )}
 
           {sel.fileUrl && (
