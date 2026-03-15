@@ -89,27 +89,18 @@ export default function App() {
   const [uploadStatus, setUploadStatus] = useState("idle");
   const descRef = useRef(null);
 
-  function htmlToMd(html) {
-    return html
-      .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>')
-      .replace(/<(strong|b)>([\s\S]*?)<\/(strong|b)>/gi, '**$2**')
-      .replace(/<(em|i)>([\s\S]*?)<\/(em|i)>/gi, '*$2*')
-      .replace(/<div><br\s*\/?><\/div>/gi, '\n')
-      .replace(/<br\s*\/?>/gi, '\n')
-      .replace(/<div>/gi, '\n').replace(/<\/div>/gi, '')
-      .replace(/<[^>]+>/g, '');
-  }
-
-  function mdToHtml(md) {
-    return md
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-      .replace(/\n/g, '<br>');
-  }
-
   function applyFormat(cmd) {
-    descRef.current.focus();
-    document.execCommand(cmd, false, null);
+    const el = descRef.current;
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const marker = cmd === "bold" ? "**" : "*";
+    const selected = el.value.slice(start, end);
+    const before = el.value.slice(0, start);
+    const after = el.value.slice(end);
+    const newVal = before + marker + selected + marker + after;
+    el.value = newVal;
+    el.focus();
+    el.setSelectionRange(start + marker.length, end + marker.length);
   }
 
   function toast_(msg) { setToast(msg); setTimeout(() => setToast(null), 6000); }
@@ -135,7 +126,7 @@ export default function App() {
     if (!form.title.trim()) return;
     setSyncing(true);
     try {
-      const description = htmlToMd(descRef.current?.innerHTML || "").trim();
+      const description = (descRef.current?.value || "").trim();
       await api({
         action: "addTopic",
         title: form.title.trim(),
@@ -147,7 +138,7 @@ export default function App() {
         fileName: form.fileName || "",
       });
       setForm({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
-      if (descRef.current) descRef.current.innerHTML = "";
+      if (descRef.current) descRef.current.value = "";
       setUploadStatus("idle");
       setView("home");
       toast_("Topic added.");
@@ -237,12 +228,11 @@ export default function App() {
           <button type="button" onMouseDown={e => { e.preventDefault(); applyFormat("bold"); }} style={{ fontWeight: "700", fontSize: 14, fontFamily: OPEN, background: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: "2px 10px", cursor: "pointer" }}>B</button>
           <button type="button" onMouseDown={e => { e.preventDefault(); applyFormat("italic"); }} style={{ fontStyle: "italic", fontSize: 14, fontFamily: OPEN, background: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: "2px 10px", cursor: "pointer" }}>I</button>
         </div>
-        <div
+        <textarea
           ref={descRef}
-          contentEditable
-          suppressContentEditableWarning
-          data-placeholder="Additional context..."
-          style={{ minHeight: 90, padding: "10px 14px", fontSize: 15, fontFamily: OPEN, outline: "none", lineHeight: 1.6, color: "#1a1a1a" }}
+          placeholder="Additional context..."
+          rows={4}
+          style={{ width: "100%", padding: "10px 14px", fontSize: 15, fontFamily: OPEN, outline: "none", lineHeight: 1.6, color: "#1a1a1a", border: "none", resize: "vertical", boxSizing: "border-box", background: "transparent" }}
         />
       </div>
       <label style={lStyle}>Submitted by (optional)</label>
