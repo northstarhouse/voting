@@ -29,6 +29,17 @@ function isClosed(t) {
   return false;
 }
 
+function isPastDue(t) {
+  return !!(t.dueDate && new Date() > new Date(t.dueDate));
+}
+
+// Voting is locked only when manually closed or all members have voted — NOT just because date passed
+function isVotingLocked(t) {
+  if (t.closed) return true;
+  if (Object.keys(t.votes || {}).length >= (t.totalMembers || 6)) return true;
+  return false;
+}
+
 function fmtDate(iso) {
   if (!iso) return "No due date";
   var d = new Date(iso);
@@ -203,8 +214,12 @@ export default function App() {
   async function castVote(topicId) {
     if (!voteForm.choice || !voteForm.voter) return;
     setSyncing(true);
+    const topic = topics.find(t => t.id === topicId);
+    const noteWithTag = isPastDue(topic)
+      ? [voteForm.note.trim(), "[Changed in meeting]"].filter(Boolean).join(" — ")
+      : voteForm.note;
     try {
-      await api({ action: "castVote", topicId, voter: voteForm.voter, choice: voteForm.choice, note: voteForm.note });
+      await api({ action: "castVote", topicId, voter: voteForm.voter, choice: voteForm.choice, note: noteWithTag });
       setVoteForm({ voter: "", choice: "", note: "" });
       setView("home");
       toast_("Vote recorded.");
@@ -274,7 +289,7 @@ export default function App() {
       <label style={lStyle}>Submitted by (optional)</label>
       <input value={form.submittedBy} onChange={e => setForm(p => ({ ...p, submittedBy: e.target.value }))}
         placeholder="Name" style={iStyle} />
-      <label style={lStyle}>Due Date (optional)</label>
+      <label style={lStyle}>Meeting / Reveal Date (optional) — results visible after this date</label>
       <input type="date" value={form.dueDate} onChange={e => setForm(p => ({ ...p, dueDate: e.target.value }))} style={iStyle} />
       <label style={lStyle}>Attachment (optional)</label>
       <label style={{ display: "flex", alignItems: "center", gap: 12, border: `2px dashed ${uploadStatus === "done" ? "#1a7a1a" : uploadStatus === "error" ? "#c0392b" : "#ccc"}`, borderRadius: 8, padding: "12px 16px", cursor: uploadStatus === "uploading" ? "default" : "pointer", background: "#fafafa" }}>
@@ -296,6 +311,8 @@ export default function App() {
   // TOPIC DETAIL
   if (view === "topic" && sel) {
     const closed = isClosed(sel);
+    const votingLocked = isVotingLocked(sel);
+    const pastDue = isPastDue(sel);
     const voteCount = Object.keys(sel.votes || {}).length;
     const tally = { Yes: 0, No: 0, Abstain: 0 };
     Object.values(sel.votes || {}).forEach(v => { if (tally[v.choice] !== undefined) tally[v.choice]++; });
@@ -329,9 +346,11 @@ export default function App() {
         </div>
 
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
-          <Badge color={closed ? "#555" : "#1a7a1a"}>{closed ? "CLOSED" : "OPEN"}</Badge>
+          <Badge color={votingLocked ? "#555" : pastDue ? "#c06000" : "#1a7a1a"}>
+            {votingLocked ? "CLOSED" : pastDue ? "PAST DUE" : "OPEN"}
+          </Badge>
           <Badge color={GOLD}>{voteCount} / {sel.totalMembers} voted</Badge>
-          <Badge color={GOLD}>Due: {fmtDate(sel.dueDate)}</Badge>
+          {sel.dueDate && <Badge color={GOLD}>Meeting: {fmtDate(sel.dueDate)}</Badge>}
         </div>
 
         {/* Results */}
@@ -350,11 +369,16 @@ export default function App() {
               <div style={{ fontWeight: "700", fontSize: 15, fontFamily: SERIF, marginBottom: 10, color: "#1a1a1a" }}>Individual Votes</div>
               {members.map(m => {
                 const v = sel.votes?.[m];
+                const meetingChange = v?.note?.includes("[Changed in meeting]");
+                const displayNote = v?.note?.replace(/ — \[Changed in meeting\]/, "").replace("[Changed in meeting]", "").trim();
                 return (
                   <div key={m} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", borderTop: "1px solid #eee" }}>
                     <div>
-                      <div style={{ fontWeight: "600", fontSize: 15, fontFamily: OPEN }}>{m}</div>
-                      {v?.note && <div style={{ color: "#555", fontSize: 13, fontFamily: OPEN, marginTop: 2 }}>"{v.note}"</div>}
+                      <div style={{ fontWeight: "600", fontSize: 15, fontFamily: OPEN, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                        {m}
+                        {meetingChange && <span style={{ fontSize: 11, fontWeight: "600", padding: "2px 8px", borderRadius: 12, background: "#fff3cd", color: "#856404", border: "1px solid #856404" }}>Changed in meeting</span>}
+                      </div>
+                      {displayNote && <div style={{ color: "#555", fontSize: 13, fontFamily: OPEN, marginTop: 2 }}>"{displayNote}"</div>}
                     </div>
                     <span style={{ fontWeight: "700", fontFamily: OPEN, color: v ? CHOICE_COLOR[v.choice] : "#aaa", fontSize: 15, marginLeft: 16, whiteSpace: "nowrap" }}>
                       {v ? v.choice : "—"}
@@ -371,9 +395,14 @@ export default function App() {
         </div>
 
         {/* Vote form */}
-        {!closed && (
+        {!votingLocked && (
           <div style={{ border: `2px solid ${GOLD}`, borderRadius: 10, padding: 20, background: "#fff" }}>
-            <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, marginBottom: 16, color: "#1a1a1a" }}>Cast a Vote</div>
+            <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, marginBottom: pastDue ? 10 : 16, color: "#1a1a1a" }}>Cast a Vote</div>
+            {pastDue && (
+              <div style={{ background: "#fff3cd", border: "1px solid #856404", borderRadius: 8, padding: "10px 14px", fontSize: 13, fontFamily: OPEN, color: "#856404", marginBottom: 16 }}>
+                ⚠️ The meeting date has passed. This vote will be marked as <strong>Changed in meeting</strong>.
+              </div>
+            )}
             <label style={{ ...lStyle, display: "block", marginBottom: 14 }}>Who is voting?</label>
             <select value={voteForm.voter} onChange={e => setVoteForm(p => ({ ...p, voter: e.target.value, choice: "", note: "" }))} style={{ ...iStyle, marginBottom: 14, color: voteForm.voter ? "#1a1a1a" : "#999" }}>
               <option value="">— Select your name —</option>
