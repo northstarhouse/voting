@@ -460,9 +460,8 @@ export default function App() {
                 const prevMatch = v?.note?.match(/\[Changed in meeting — was: (\w+)\]/);
                 const previousChoice = prevMatch?.[1];
                 const displayNote = v?.note
-                  ?.replace(/ — \[Changed in meeting[^\]]*\]/, "")
-                  .replace(/\[Changed in meeting[^\]]*\]/, "")
-                  .trim();
+                  ? v.note.replace(/ — \[Changed in meeting[^\]]*\]/, "").replace(/\[Changed in meeting[^\]]*\]/, "").trim()
+                  : undefined;
                 return (
                   <div key={m} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", borderTop: "1px solid #eee" }}>
                     <div>
