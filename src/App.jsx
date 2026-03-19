@@ -119,11 +119,14 @@ export default function App() {
   const [view, setView] = useState("home");
   const [selId, setSelId] = useState(null);
   const [form, setForm] = useState({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
+  const [editForm, setEditForm] = useState({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
   const [voteForm, setVoteForm] = useState({ voter: "", choice: "", note: "" });
   const [newMember, setNewMember] = useState("");
   const [toast, setToast] = useState(null);
   const [uploadStatus, setUploadStatus] = useState("idle");
+  const [editUploadStatus, setEditUploadStatus] = useState("idle");
   const descRef = useRef(null);
+  const editDescRef = useRef(null);
 
   function handlePaste(e) {
     e.preventDefault();
@@ -143,10 +146,16 @@ export default function App() {
     }
   }
 
-  function applyFormat(cmd) {
-    descRef.current.focus();
+  function applyFormat(cmd, ref) {
+    (ref || descRef).current.focus();
     document.execCommand(cmd, false, null);
   }
+
+  useEffect(() => {
+    if (view === "edit" && editDescRef.current) {
+      editDescRef.current.innerHTML = editForm.description || "";
+    }
+  }, [view]);
 
   function toast_(msg) { setToast(msg); setTimeout(() => setToast(null), 6000); }
 
@@ -195,19 +204,49 @@ export default function App() {
     }
   }
 
-  async function handleFileUpload(e) {
+  async function handleFileUpload(e, isEdit = false) {
     const file = e.target.files[0];
     if (!file) return;
-    setUploadStatus("uploading");
+    isEdit ? setEditUploadStatus("uploading") : setUploadStatus("uploading");
     try {
       const dataUrl = await fileToBase64(file);
       const base64 = dataUrl.split(",")[1];
       const result = await api({ action: "uploadFile", fileName: file.name, fileData: base64, mimeType: file.type || "application/octet-stream" });
-      setForm(p => ({ ...p, fileUrl: result.url, fileName: result.name }));
-      setUploadStatus("done");
+      if (isEdit) {
+        setEditForm(p => ({ ...p, fileUrl: result.url, fileName: result.name }));
+        setEditUploadStatus("done");
+      } else {
+        setForm(p => ({ ...p, fileUrl: result.url, fileName: result.name }));
+        setUploadStatus("done");
+      }
     } catch (err) {
-      setUploadStatus("error");
+      isEdit ? setEditUploadStatus("error") : setUploadStatus("error");
       toast_(err.message || "Upload failed.");
+    }
+  }
+
+  async function updateTopic() {
+    if (!editForm.title.trim()) return;
+    setSyncing(true);
+    try {
+      const description = cleanHtml(editDescRef.current?.innerHTML || "");
+      await api({
+        action: "updateTopic",
+        topicId: sel.id,
+        title: editForm.title.trim(),
+        description,
+        submittedBy: editForm.submittedBy.trim(),
+        dueDate: editForm.dueDate,
+        fileUrl: editForm.fileUrl || "",
+        fileName: editForm.fileName || "",
+      });
+      setView("topic");
+      toast_("Topic updated.");
+      loadTopics();
+    } catch (err) {
+      toast_(err.message || "Failed to update topic.");
+    } finally {
+      setSyncing(false);
     }
   }
 
@@ -215,8 +254,9 @@ export default function App() {
     if (!voteForm.choice || !voteForm.voter) return;
     setSyncing(true);
     const topic = topics.find(t => t.id === topicId);
+    const previousVote = topic?.votes?.[voteForm.voter];
     const noteWithTag = isPastDue(topic)
-      ? [voteForm.note.trim(), "[Changed in meeting]"].filter(Boolean).join(" — ")
+      ? [voteForm.note.trim(), previousVote ? `[Changed in meeting — was: ${previousVote.choice}]` : "[Changed in meeting]"].filter(Boolean).join(" — ")
       : voteForm.note;
     try {
       await api({ action: "castVote", topicId, voter: voteForm.voter, choice: voteForm.choice, note: noteWithTag });
@@ -308,6 +348,48 @@ export default function App() {
     </Page>
   );
 
+  // EDIT TOPIC
+  if (view === "edit" && sel) return (
+    <Page title="Edit Topic" onBack={() => setView("topic")}>
+      <label style={lStyle}>Title *</label>
+      <input value={editForm.title} onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} style={iStyle} />
+      <label style={lStyle}>Description (optional)</label>
+      <div style={{ border: "2px solid #ccc", borderRadius: 8, overflow: "hidden" }}>
+        <div style={{ display: "flex", gap: 4, padding: "6px 8px", background: "#f5f5f5", borderBottom: "1px solid #ddd" }}>
+          <button type="button" onMouseDown={e => { e.preventDefault(); applyFormat("bold", editDescRef); }} style={{ fontWeight: "700", fontSize: 14, fontFamily: OPEN, background: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: "2px 10px", cursor: "pointer" }}>B</button>
+          <button type="button" onMouseDown={e => { e.preventDefault(); applyFormat("italic", editDescRef); }} style={{ fontStyle: "italic", fontSize: 14, fontFamily: OPEN, background: "#fff", border: "1px solid #ccc", borderRadius: 4, padding: "2px 10px", cursor: "pointer" }}>I</button>
+        </div>
+        <div
+          ref={editDescRef}
+          contentEditable
+          suppressContentEditableWarning
+          onPaste={handlePaste}
+          data-placeholder="Additional context..."
+          style={{ minHeight: 90, padding: "10px 14px", fontSize: 15, fontFamily: OPEN, outline: "none", lineHeight: 1.6, color: "#1a1a1a" }}
+        />
+      </div>
+      <label style={lStyle}>Submitted by (optional)</label>
+      <input value={editForm.submittedBy} onChange={e => setEditForm(p => ({ ...p, submittedBy: e.target.value }))}
+        placeholder="Name" style={iStyle} />
+      <label style={lStyle}>Meeting / Reveal Date (optional) — results visible after this date</label>
+      <input type="date" value={editForm.dueDate} onChange={e => setEditForm(p => ({ ...p, dueDate: e.target.value }))} style={iStyle} />
+      <label style={lStyle}>Attachment (optional)</label>
+      <label style={{ display: "flex", alignItems: "center", gap: 12, border: `2px dashed ${editUploadStatus === "done" ? "#1a7a1a" : editUploadStatus === "error" ? "#c0392b" : "#ccc"}`, borderRadius: 8, padding: "12px 16px", cursor: editUploadStatus === "uploading" ? "default" : "pointer", background: "#fafafa" }}>
+        <input type="file" onChange={e => handleFileUpload(e, true)} style={{ display: "none" }} disabled={editUploadStatus === "uploading"} />
+        <span style={{ background: editUploadStatus === "done" ? "#1a7a1a" : GOLD, color: "#fff", borderRadius: 6, padding: "6px 14px", fontSize: 14, fontWeight: "600", fontFamily: OPEN, whiteSpace: "nowrap" }}>
+          {editUploadStatus === "uploading" ? "Uploading…" : editUploadStatus === "done" ? "✓ Uploaded" : "Upload to Drive"}
+        </span>
+        <span style={{ fontSize: 14, fontFamily: OPEN, color: editForm.fileName ? "#1a1a1a" : "#999", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+          {editUploadStatus === "uploading" ? "Saving to Board Voting folder…" : editForm.fileName || "No file chosen"}
+        </span>
+        {editUploadStatus === "done" && <button type="button" onClick={e => { e.preventDefault(); setEditForm(p => ({ ...p, fileUrl: "", fileName: "" })); setEditUploadStatus("idle"); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "#c0392b", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>}
+      </label>
+      <button onClick={updateTopic} disabled={syncing} style={{ ...btnStyle, width: "100%", padding: "14px", marginTop: 4, opacity: syncing ? 0.6 : 1 }}>
+        {syncing ? "Saving…" : "Save Changes"}
+      </button>
+    </Page>
+  );
+
   // TOPIC DETAIL
   if (view === "topic" && sel) {
     const closed = isClosed(sel);
@@ -345,12 +427,17 @@ export default function App() {
           )}
         </div>
 
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4 }}>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4, alignItems: "center" }}>
           <Badge color={votingLocked ? "#555" : pastDue ? "#c06000" : "#1a7a1a"}>
             {votingLocked ? "CLOSED" : pastDue ? "PAST DUE" : "OPEN"}
           </Badge>
           <Badge color={GOLD}>{voteCount} / {sel.totalMembers} voted</Badge>
           {sel.dueDate && <Badge color={GOLD}>Meeting: {fmtDate(sel.dueDate)}</Badge>}
+          <button onClick={() => {
+            setEditForm({ title: sel.title, description: sel.description || "", submittedBy: sel.submittedBy || "", dueDate: sel.dueDate || "", fileUrl: sel.fileUrl || "", fileName: sel.fileName || "" });
+            setEditUploadStatus(sel.fileUrl ? "done" : "idle");
+            setView("edit");
+          }} style={{ ...outlineBtn, marginLeft: "auto", padding: "4px 12px", fontSize: 13 }}>Edit</button>
         </div>
 
         {/* Results */}
@@ -369,8 +456,13 @@ export default function App() {
               <div style={{ fontWeight: "700", fontSize: 15, fontFamily: SERIF, marginBottom: 10, color: "#1a1a1a" }}>Individual Votes</div>
               {members.map(m => {
                 const v = sel.votes?.[m];
-                const meetingChange = v?.note?.includes("[Changed in meeting]");
-                const displayNote = v?.note?.replace(/ — \[Changed in meeting\]/, "").replace("[Changed in meeting]", "").trim();
+                const meetingChange = v?.note?.includes("[Changed in meeting");
+                const prevMatch = v?.note?.match(/\[Changed in meeting — was: (\w+)\]/);
+                const previousChoice = prevMatch?.[1];
+                const displayNote = v?.note
+                  ?.replace(/ — \[Changed in meeting[^\]]*\]/, "")
+                  .replace(/\[Changed in meeting[^\]]*\]/, "")
+                  .trim();
                 return (
                   <div key={m} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", borderTop: "1px solid #eee" }}>
                     <div>
@@ -378,6 +470,11 @@ export default function App() {
                         {m}
                         {meetingChange && <span style={{ fontSize: 11, fontWeight: "600", padding: "2px 8px", borderRadius: 12, background: "#fff3cd", color: "#856404", border: "1px solid #856404" }}>Changed in meeting</span>}
                       </div>
+                      {previousChoice && (
+                        <div style={{ fontSize: 12, fontFamily: OPEN, color: "#888", marginTop: 2 }}>
+                          Previously: <span style={{ color: CHOICE_COLOR[previousChoice], fontWeight: "600", textDecoration: "line-through" }}>{previousChoice}</span>
+                        </div>
+                      )}
                       {displayNote && <div style={{ color: "#555", fontSize: 13, fontFamily: OPEN, marginTop: 2 }}>"{displayNote}"</div>}
                     </div>
                     <span style={{ fontWeight: "700", fontFamily: OPEN, color: v ? CHOICE_COLOR[v.choice] : "#aaa", fontSize: 15, marginLeft: 16, whiteSpace: "nowrap" }}>
@@ -397,10 +494,12 @@ export default function App() {
         {/* Vote form */}
         {!votingLocked && (
           <div style={{ border: `2px solid ${GOLD}`, borderRadius: 10, padding: 20, background: "#fff" }}>
-            <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, marginBottom: pastDue ? 10 : 16, color: "#1a1a1a" }}>Cast a Vote</div>
+            <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, marginBottom: pastDue ? 10 : 16, color: "#1a1a1a" }}>
+              {pastDue ? "Add Post-Meeting Votes" : "Cast a Vote"}
+            </div>
             {pastDue && (
               <div style={{ background: "#fff3cd", border: "1px solid #856404", borderRadius: 8, padding: "10px 14px", fontSize: 13, fontFamily: OPEN, color: "#856404", marginBottom: 16 }}>
-                ⚠️ The meeting date has passed. This vote will be marked as <strong>Changed in meeting</strong>.
+                ⚠️ The meeting date has passed. Votes will be marked as <strong>Changed in meeting</strong>. Members who voted electronically can also change their vote here.
               </div>
             )}
             <label style={{ ...lStyle, display: "block", marginBottom: 14 }}>Who is voting?</label>
@@ -408,16 +507,23 @@ export default function App() {
               <option value="">— Select your name —</option>
               {members.map(m => {
                 const voted = !!sel.votes?.[m];
+                // When past due, allow re-voting (vote changed in meeting)
+                const isDisabled = voted && !pastDue;
                 return (
-                  <option key={m} value={m} disabled={voted} style={{ color: voted ? "#bbb" : "#222" }}>
-                    {m}{voted ? " (voted)" : ""}
+                  <option key={m} value={m} disabled={isDisabled} style={{ color: isDisabled ? "#bbb" : "#222" }}>
+                    {m}{voted ? (pastDue ? " (change vote)" : " (voted)") : ""}
                   </option>
                 );
               })}
             </select>
 
-            {voteForm.voter && !voterAlreadyVoted && (
+            {voteForm.voter && (!voterAlreadyVoted || pastDue) && (
               <>
+                {voterAlreadyVoted && pastDue && (
+                  <div style={{ background: "#f5f0e8", border: `1px solid ${GOLD}`, borderRadius: 8, padding: "10px 14px", fontSize: 13, fontFamily: OPEN, color: "#555", marginBottom: 14 }}>
+                    Previously voted <strong style={{ color: CHOICE_COLOR[sel.votes[voteForm.voter].choice] }}>{sel.votes[voteForm.voter].choice}</strong>. Select a new vote below to change it.
+                  </div>
+                )}
                 <label style={lStyle}>Your vote</label>
                 <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
                   {["Yes", "No", "Abstain"].map(c => (
@@ -436,11 +542,11 @@ export default function App() {
                   ...btnStyle, width: "100%", padding: "14px",
                   opacity: (voteForm.choice && !syncing) ? 1 : 0.4,
                   cursor: (voteForm.choice && !syncing) ? "pointer" : "default"
-                }}>{syncing ? "Saving…" : "Submit Vote"}</button>
+                }}>{syncing ? "Saving…" : pastDue ? "Submit Post-Meeting Vote" : "Submit Vote"}</button>
               </>
             )}
 
-            {voterAlreadyVoted && (
+            {voterAlreadyVoted && !pastDue && (
               <div style={{ background: "#f0f0f0", borderRadius: 8, padding: "12px 16px", fontSize: 15, fontFamily: OPEN, color: "#555" }}>
                 ✓ <strong>{voteForm.voter}</strong> has already voted <strong style={{ color: CHOICE_COLOR[sel.votes[voteForm.voter].choice] }}>{sel.votes[voteForm.voter].choice}</strong> on this topic.
               </div>
