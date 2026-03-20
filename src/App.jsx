@@ -8,6 +8,7 @@ document.head.appendChild(cardoLink);
 
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrsP-Nnq_hp5QWWks6BA5ZnuS2B9E_KQyFskRQC0PSehb6NcspJhyO4wlqD3-VfsEwxg/exec";
 const INITIAL_MEMBERS = ["Ken", "Wyn", "Paula", "Rick", "Jeff", "Rich"];
+const BOARD_MEMBER_COUNT = 6;
 const GOLD = "#886c44";
 const CREAM = "#fdfbf8";
 const OPEN = "'Manrope', Tahoma, sans-serif";
@@ -25,7 +26,7 @@ function useLS(key, def) {
 function isClosed(t) {
   if (t.closed) return true;
   if (t.dueDate && new Date() > new Date(t.dueDate)) return true;
-  if (Object.keys(t.votes || {}).length >= (t.totalMembers || 6)) return true;
+  if (Object.keys(t.votes || {}).length >= BOARD_MEMBER_COUNT) return true;
   return false;
 }
 
@@ -36,7 +37,7 @@ function isPastDue(t) {
 // Voting is locked only when manually closed or all members have voted — NOT just because date passed
 function isVotingLocked(t) {
   if (t.closed) return true;
-  if (Object.keys(t.votes || {}).length >= (t.totalMembers || 6)) return true;
+  if (Object.keys(t.votes || {}).length >= BOARD_MEMBER_COUNT) return true;
   return false;
 }
 
@@ -187,7 +188,7 @@ export default function App() {
         description,
         submittedBy: form.submittedBy.trim(),
         dueDate: form.dueDate,
-        totalMembers: members.length,
+        totalMembers: BOARD_MEMBER_COUNT,
         fileUrl: form.fileUrl || "",
         fileName: form.fileName || "",
       });
@@ -431,7 +432,7 @@ export default function App() {
           <Badge color={votingLocked ? "#555" : pastDue ? "#c06000" : "#1a7a1a"}>
             {votingLocked ? "CLOSED" : pastDue ? "PAST DUE" : "OPEN"}
           </Badge>
-          <Badge color={GOLD}>{voteCount} / {sel.totalMembers} voted</Badge>
+          <Badge color={GOLD}>{voteCount} / {BOARD_MEMBER_COUNT} voted</Badge>
           {sel.dueDate && <Badge color={GOLD}>Meeting: {fmtDate(sel.dueDate)}</Badge>}
           <button onClick={() => {
             setEditForm({ title: sel.title, description: sel.description || "", submittedBy: sel.submittedBy || "", dueDate: sel.dueDate || "", fileUrl: sel.fileUrl || "", fileName: sel.fileName || "" });
@@ -485,7 +486,7 @@ export default function App() {
             </>
           ) : (
             <div style={{ fontSize: 15, fontFamily: OPEN, color: "#333" }}>
-              <strong>{voteCount}</strong> of <strong>{sel.totalMembers}</strong> have voted. Results are hidden until voting closes.
+              <strong>{voteCount}</strong> of <strong>{BOARD_MEMBER_COUNT}</strong> have voted. Results are hidden until voting closes.
             </div>
           )}
         </div>
@@ -624,7 +625,7 @@ function TopicRow({ t, onClick }) {
     >
       <div>
         <div style={{ fontSize: 16, fontWeight: "800", fontFamily: OPEN, color: "#1a1a1a" }}>{t.title}</div>
-        <div style={{ fontSize: 13, fontFamily: OPEN, color: "#666", marginTop: 3 }}>{voteCount} / {t.totalMembers} voted · {fmtDate(t.dueDate)}</div>
+        <div style={{ fontSize: 13, fontFamily: OPEN, color: "#666", marginTop: 3 }}>{voteCount} / {BOARD_MEMBER_COUNT} voted · {fmtDate(t.dueDate)}</div>
       </div>
       <span style={{
         fontSize: 13, fontFamily: OPEN, fontWeight: "600", padding: "4px 12px", borderRadius: 20, whiteSpace: "nowrap", marginLeft: 12,
@@ -660,3 +661,5 @@ const outlineBtn = { background: "#fff", border: `2px solid ${GOLD}`, borderRadi
 const iStyle = { width: "100%", border: "2px solid #ccc", borderRadius: 8, padding: "10px 14px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: OPEN };
 const lStyle = { fontSize: 14, fontWeight: "600", color: "#333", marginBottom: 2, fontFamily: OPEN };
 const secLabel = { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 10, fontFamily: OPEN };
+
+
