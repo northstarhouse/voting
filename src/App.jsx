@@ -124,6 +124,7 @@ export default function App() {
   const [form, setForm] = useState({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
   const [editForm, setEditForm] = useState({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
   const [postMeetingForm, setPostMeetingForm] = useState({ overallConsensus: "", stipulations: "", nextSteps: "" });
+  const [postMeetingOpen, setPostMeetingOpen] = useState(false);
   const [voteForm, setVoteForm] = useState({ voter: "", choice: "", note: "" });
   const [newMember, setNewMember] = useState("");
   const [toast, setToast] = useState(null);
@@ -169,6 +170,7 @@ export default function App() {
         stipulations: sel.stipulations || "",
         nextSteps: sel.nextSteps || "",
       });
+      setPostMeetingOpen(false);
     }
   }, [view, selId]);
 
@@ -312,6 +314,7 @@ export default function App() {
       });
       toast_("Post-meeting update saved.");
       await loadTopics();
+      setPostMeetingOpen(false);
     } catch (err) {
       toast_(err.message || "Failed to save post-meeting update.");
     } finally {
@@ -461,15 +464,6 @@ export default function App() {
           )}
         </div>
 
-        {(sel.overallConsensus || sel.stipulations || sel.nextSteps) && (
-          <div style={{ border: "2px solid #e4d8c4", borderRadius: 10, padding: 20, background: "#fffdf9", display: "flex", flexDirection: "column", gap: 14 }}>
-            <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, color: "#1a1a1a" }}>Overall Consensus</div>
-            {sel.overallConsensus && <ConsensusBlock label="Consensus" text={sel.overallConsensus} />}
-            {sel.stipulations && <ConsensusBlock label="Stipulations" text={sel.stipulations} />}
-            {sel.nextSteps && <ConsensusBlock label="Next Steps" text={sel.nextSteps} />}
-          </div>
-        )}
-
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4, alignItems: "center" }}>
           <Badge color={votingLocked ? "#555" : pastDue ? "#c06000" : "#1a7a1a"}>
             {votingLocked ? "CLOSED" : pastDue ? "PAST DUE" : "OPEN"}
@@ -604,17 +598,50 @@ export default function App() {
         )}
 
         {(pastDue || closed) && (
-          <div style={{ border: "2px solid #e4d8c4", borderRadius: 10, padding: 20, background: "#fffdf9", display: "flex", flexDirection: "column", gap: 12 }}>
-            <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, color: "#1a1a1a" }}>Post-Meeting Update</div>
-            <label style={lStyle}>Overall consensus</label>
-            <textarea value={postMeetingForm.overallConsensus} onChange={e => setPostMeetingForm(p => ({ ...p, overallConsensus: e.target.value }))} rows={3} placeholder="Summary of the board's overall consensus..." style={iStyle} />
-            <label style={lStyle}>Stipulations</label>
-            <textarea value={postMeetingForm.stipulations} onChange={e => setPostMeetingForm(p => ({ ...p, stipulations: e.target.value }))} rows={3} placeholder="Conditions, caveats, or required stipulations..." style={iStyle} />
-            <label style={lStyle}>Next steps</label>
-            <textarea value={postMeetingForm.nextSteps} onChange={e => setPostMeetingForm(p => ({ ...p, nextSteps: e.target.value }))} rows={3} placeholder="Follow-up actions, owners, or deadlines..." style={iStyle} />
-            <button onClick={savePostMeetingUpdate} disabled={syncing} style={{ ...btnStyle, width: "100%", padding: "14px", opacity: syncing ? 0.6 : 1 }}>
-              {syncing ? "Saving..." : "Save Post-Meeting Update"}
-            </button>
+          <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+            {!postMeetingOpen && (
+              <>
+                {(sel.overallConsensus || sel.stipulations || sel.nextSteps) && (
+                  <div style={{ border: "2px solid #e4d8c4", borderRadius: 10, padding: 20, background: "#fffdf9", display: "flex", flexDirection: "column", gap: 14 }}>
+                    <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, color: "#1a1a1a" }}>Post-Meeting Updates</div>
+                    {sel.overallConsensus && <ConsensusBlock label="Consensus" text={sel.overallConsensus} />}
+                    {sel.stipulations && <ConsensusBlock label="Stipulations" text={sel.stipulations} />}
+                    {sel.nextSteps && <ConsensusBlock label="Next Steps" text={sel.nextSteps} />}
+                  </div>
+                )}
+                <button onClick={() => setPostMeetingOpen(true)} style={{ ...outlineBtn, width: "100%", padding: "14px" }}>
+                  {sel.overallConsensus || sel.stipulations || sel.nextSteps ? "Edit Post-Meeting Updates" : "Add Post-Meeting Updates"}
+                </button>
+              </>
+            )}
+
+            {postMeetingOpen && (
+              <div style={{ border: "2px solid #e4d8c4", borderRadius: 10, padding: 20, background: "#fffdf9", display: "flex", flexDirection: "column", gap: 12 }}>
+                <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, color: "#1a1a1a" }}>Post-Meeting Updates</div>
+                <label style={lStyle}>Overall consensus</label>
+                <textarea value={postMeetingForm.overallConsensus} onChange={e => setPostMeetingForm(p => ({ ...p, overallConsensus: e.target.value }))} rows={3} placeholder="Summary of the board's overall consensus..." style={iStyle} />
+                <label style={lStyle}>Stipulations</label>
+                <textarea value={postMeetingForm.stipulations} onChange={e => setPostMeetingForm(p => ({ ...p, stipulations: e.target.value }))} rows={3} placeholder="Conditions, caveats, or required stipulations..." style={iStyle} />
+                <label style={lStyle}>Next steps</label>
+                <textarea value={postMeetingForm.nextSteps} onChange={e => setPostMeetingForm(p => ({ ...p, nextSteps: e.target.value }))} rows={3} placeholder="Follow-up actions, owners, or deadlines..." style={iStyle} />
+                <button onClick={savePostMeetingUpdate} disabled={syncing} style={{ ...btnStyle, width: "100%", padding: "14px", opacity: syncing ? 0.6 : 1 }}>
+                  {syncing ? "Saving..." : "Save Post-Meeting Updates"}
+                </button>
+                <button
+                  onClick={() => {
+                    setPostMeetingForm({
+                      overallConsensus: sel.overallConsensus || "",
+                      stipulations: sel.stipulations || "",
+                      nextSteps: sel.nextSteps || "",
+                    });
+                    setPostMeetingOpen(false);
+                  }}
+                  style={{ ...outlineBtn, width: "100%", padding: "14px" }}
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         )}
 
