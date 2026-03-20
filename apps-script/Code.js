@@ -1,5 +1,27 @@
+function getTopicsSheet() {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  if (!ss) {
+    throw new Error("No active spreadsheet is available.");
+  }
+
+  var candidates = ["Topics", "topics"];
+  for (var i = 0; i < candidates.length; i++) {
+    var namedSheet = ss.getSheetByName(candidates[i]);
+    if (namedSheet) {
+      return namedSheet;
+    }
+  }
+
+  var sheets = ss.getSheets();
+  if (sheets.length === 1) {
+    return sheets[0];
+  }
+
+  throw new Error('Topics sheet not found. Rename your sheet to "Topics" or update getTopicsSheet().');
+}
+
 function updateTopic(data) {
-  var sheet = getTopicsSheet(); // replace with your actual topics sheet accessor
+  var sheet = getTopicsSheet();
   var rows = sheet.getDataRange().getValues();
   var headers = rows[0];
 
