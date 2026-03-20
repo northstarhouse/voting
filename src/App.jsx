@@ -34,7 +34,7 @@ function isPastDue(t) {
   return !!(t.dueDate && new Date() > new Date(t.dueDate));
 }
 
-// Voting is locked only when manually closed or all members have voted — NOT just because date passed
+// Voting is locked only when manually closed or all members have voted â€” NOT just because date passed
 function isVotingLocked(t) {
   if (t.closed) return true;
   if (Object.keys(t.votes || {}).length >= BOARD_MEMBER_COUNT) return true;
@@ -121,8 +121,8 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
   const [view, setView] = useState("home");
   const [selId, setSelId] = useState(null);
-  const [form, setForm] = useState({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
-  const [editForm, setEditForm] = useState({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
+  const [form, setForm] = useState({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "", overallConsensus: "", stipulations: "", nextSteps: "" });
+  const [editForm, setEditForm] = useState({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "", overallConsensus: "", stipulations: "", nextSteps: "" });
   const [voteForm, setVoteForm] = useState({ voter: "", choice: "", note: "" });
   const [newMember, setNewMember] = useState("");
   const [toast, setToast] = useState(null);
@@ -193,8 +193,11 @@ export default function App() {
         totalMembers: BOARD_MEMBER_COUNT,
         fileUrl: form.fileUrl || "",
         fileName: form.fileName || "",
+        overallConsensus: form.overallConsensus.trim(),
+        stipulations: form.stipulations.trim(),
+        nextSteps: form.nextSteps.trim(),
       });
-      setForm({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
+      setForm({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "", overallConsensus: "", stipulations: "", nextSteps: "" });
       if (descRef.current) descRef.current.innerHTML = "";
       setUploadStatus("idle");
       setView("home");
@@ -242,6 +245,9 @@ export default function App() {
         dueDate: editForm.dueDate,
         fileUrl: editForm.fileUrl || "",
         fileName: editForm.fileName || "",
+        overallConsensus: editForm.overallConsensus.trim(),
+        stipulations: editForm.stipulations.trim(),
+        nextSteps: editForm.nextSteps.trim(),
       });
       setView("topic");
       toast_("Topic updated.");
@@ -259,7 +265,7 @@ export default function App() {
     const topic = topics.find(t => t.id === topicId);
     const previousVote = topic?.votes?.[voteForm.voter];
     const noteWithTag = isPastDue(topic)
-      ? [voteForm.note.trim(), previousVote ? `[Changed in meeting — was: ${previousVote.choice}]` : "[Changed in meeting]"].filter(Boolean).join(" — ")
+      ? [voteForm.note.trim(), previousVote ? `[Changed in meeting â€” was: ${previousVote.choice}]` : "[Changed in meeting]"].filter(Boolean).join(" â€” ")
       : voteForm.note;
     try {
       await api({ action: "castVote", topicId, voter: voteForm.voter, choice: voteForm.choice, note: noteWithTag });
@@ -297,7 +303,7 @@ export default function App() {
       {members.map((m, i) => (
         <div key={m} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", border: "1px solid #ddd", borderRadius: 8, background: "#fff" }}>
           <span style={{ fontSize: 16, fontFamily: OPEN }}>{m}</span>
-          <button onClick={() => setMembers(p => p.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#c0392b", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>×</button>
+          <button onClick={() => setMembers(p => p.filter((_, j) => j !== i))} style={{ background: "none", border: "none", color: "#c0392b", fontSize: 22, cursor: "pointer", lineHeight: 1 }}>Ã—</button>
         </div>
       ))}
       <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
@@ -332,21 +338,27 @@ export default function App() {
       <label style={lStyle}>Submitted by (optional)</label>
       <input value={form.submittedBy} onChange={e => setForm(p => ({ ...p, submittedBy: e.target.value }))}
         placeholder="Name" style={iStyle} />
-      <label style={lStyle}>Meeting / Reveal Date (optional) — results visible after this date</label>
+      <label style={lStyle}>Meeting / Reveal Date (optional) â€” results visible after this date</label>
       <input type="date" value={form.dueDate} onChange={e => setForm(p => ({ ...p, dueDate: e.target.value }))} style={iStyle} />
+      <label style={lStyle}>Overall consensus (optional)</label>
+      <textarea value={form.overallConsensus} onChange={e => setForm(p => ({ ...p, overallConsensus: e.target.value }))} rows={3} placeholder="Summary of the board's overall consensus..." style={iStyle} />
+      <label style={lStyle}>Stipulations (optional)</label>
+      <textarea value={form.stipulations} onChange={e => setForm(p => ({ ...p, stipulations: e.target.value }))} rows={3} placeholder="Conditions, caveats, or required stipulations..." style={iStyle} />
+      <label style={lStyle}>Next steps (optional)</label>
+      <textarea value={form.nextSteps} onChange={e => setForm(p => ({ ...p, nextSteps: e.target.value }))} rows={3} placeholder="Follow-up actions, owners, or deadlines..." style={iStyle} />
       <label style={lStyle}>Attachment (optional)</label>
       <label style={{ display: "flex", alignItems: "center", gap: 12, border: `2px dashed ${uploadStatus === "done" ? "#1a7a1a" : uploadStatus === "error" ? "#c0392b" : "#ccc"}`, borderRadius: 8, padding: "12px 16px", cursor: uploadStatus === "uploading" ? "default" : "pointer", background: "#fafafa" }}>
         <input type="file" onChange={handleFileUpload} style={{ display: "none" }} disabled={uploadStatus === "uploading"} />
         <span style={{ background: uploadStatus === "done" ? "#1a7a1a" : GOLD, color: "#fff", borderRadius: 6, padding: "6px 14px", fontSize: 14, fontWeight: "600", fontFamily: OPEN, whiteSpace: "nowrap" }}>
-          {uploadStatus === "uploading" ? "Uploading…" : uploadStatus === "done" ? "✓ Uploaded" : "Upload to Drive"}
+          {uploadStatus === "uploading" ? "Uploadingâ€¦" : uploadStatus === "done" ? "âœ“ Uploaded" : "Upload to Drive"}
         </span>
         <span style={{ fontSize: 14, fontFamily: OPEN, color: form.fileName ? "#1a1a1a" : "#999", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {uploadStatus === "uploading" ? "Saving to Board Voting folder…" : form.fileName || "No file chosen"}
+          {uploadStatus === "uploading" ? "Saving to Board Voting folderâ€¦" : form.fileName || "No file chosen"}
         </span>
-        {uploadStatus === "done" && <button type="button" onClick={e => { e.preventDefault(); setForm(p => ({ ...p, fileUrl: "", fileName: "" })); setUploadStatus("idle"); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "#c0392b", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>}
+        {uploadStatus === "done" && <button type="button" onClick={e => { e.preventDefault(); setForm(p => ({ ...p, fileUrl: "", fileName: "" })); setUploadStatus("idle"); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "#c0392b", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 0 }}>Ã—</button>}
       </label>
       <button onClick={submitTopic} disabled={syncing} style={{ ...btnStyle, width: "100%", padding: "14px", marginTop: 4, opacity: syncing ? 0.6 : 1 }}>
-        {syncing ? "Saving…" : "Submit Topic"}
+        {syncing ? "Savingâ€¦" : "Submit Topic"}
       </button>
     </Page>
   );
@@ -374,21 +386,27 @@ export default function App() {
       <label style={lStyle}>Submitted by (optional)</label>
       <input value={editForm.submittedBy} onChange={e => setEditForm(p => ({ ...p, submittedBy: e.target.value }))}
         placeholder="Name" style={iStyle} />
-      <label style={lStyle}>Meeting / Reveal Date (optional) — results visible after this date</label>
+      <label style={lStyle}>Meeting / Reveal Date (optional) â€” results visible after this date</label>
       <input type="date" value={editForm.dueDate} onChange={e => setEditForm(p => ({ ...p, dueDate: e.target.value }))} style={iStyle} />
+      <label style={lStyle}>Overall consensus (optional)</label>
+      <textarea value={editForm.overallConsensus} onChange={e => setEditForm(p => ({ ...p, overallConsensus: e.target.value }))} rows={3} placeholder="Summary of the board's overall consensus..." style={iStyle} />
+      <label style={lStyle}>Stipulations (optional)</label>
+      <textarea value={editForm.stipulations} onChange={e => setEditForm(p => ({ ...p, stipulations: e.target.value }))} rows={3} placeholder="Conditions, caveats, or required stipulations..." style={iStyle} />
+      <label style={lStyle}>Next steps (optional)</label>
+      <textarea value={editForm.nextSteps} onChange={e => setEditForm(p => ({ ...p, nextSteps: e.target.value }))} rows={3} placeholder="Follow-up actions, owners, or deadlines..." style={iStyle} />
       <label style={lStyle}>Attachment (optional)</label>
       <label style={{ display: "flex", alignItems: "center", gap: 12, border: `2px dashed ${editUploadStatus === "done" ? "#1a7a1a" : editUploadStatus === "error" ? "#c0392b" : "#ccc"}`, borderRadius: 8, padding: "12px 16px", cursor: editUploadStatus === "uploading" ? "default" : "pointer", background: "#fafafa" }}>
         <input type="file" onChange={e => handleFileUpload(e, true)} style={{ display: "none" }} disabled={editUploadStatus === "uploading"} />
         <span style={{ background: editUploadStatus === "done" ? "#1a7a1a" : GOLD, color: "#fff", borderRadius: 6, padding: "6px 14px", fontSize: 14, fontWeight: "600", fontFamily: OPEN, whiteSpace: "nowrap" }}>
-          {editUploadStatus === "uploading" ? "Uploading…" : editUploadStatus === "done" ? "✓ Uploaded" : "Upload to Drive"}
+          {editUploadStatus === "uploading" ? "Uploadingâ€¦" : editUploadStatus === "done" ? "âœ“ Uploaded" : "Upload to Drive"}
         </span>
         <span style={{ fontSize: 14, fontFamily: OPEN, color: editForm.fileName ? "#1a1a1a" : "#999", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {editUploadStatus === "uploading" ? "Saving to Board Voting folder…" : editForm.fileName || "No file chosen"}
+          {editUploadStatus === "uploading" ? "Saving to Board Voting folderâ€¦" : editForm.fileName || "No file chosen"}
         </span>
-        {editUploadStatus === "done" && <button type="button" onClick={e => { e.preventDefault(); setEditForm(p => ({ ...p, fileUrl: "", fileName: "" })); setEditUploadStatus("idle"); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "#c0392b", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 0 }}>×</button>}
+        {editUploadStatus === "done" && <button type="button" onClick={e => { e.preventDefault(); setEditForm(p => ({ ...p, fileUrl: "", fileName: "" })); setEditUploadStatus("idle"); }} style={{ marginLeft: "auto", background: "none", border: "none", color: "#c0392b", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 0 }}>Ã—</button>}
       </label>
       <button onClick={updateTopic} disabled={syncing} style={{ ...btnStyle, width: "100%", padding: "14px", marginTop: 4, opacity: syncing ? 0.6 : 1 }}>
-        {syncing ? "Saving…" : "Save Changes"}
+        {syncing ? "Savingâ€¦" : "Save Changes"}
       </button>
     </Page>
   );
@@ -419,7 +437,7 @@ export default function App() {
           {sel.fileUrl && (
             <div style={{ borderTop: "1px solid #eee", paddingTop: 14 }}>
               <a href={sel.fileUrl} target="_blank" rel="noopener noreferrer" style={{ display: "inline-flex", alignItems: "center", gap: 8, fontSize: 13, fontWeight: "600", fontFamily: OPEN, color: GOLD, textDecoration: "none" }}>
-                📄 {sel.fileName || "View attachment"}
+                ðŸ“„ {sel.fileName || "View attachment"}
               </a>
             </div>
           )}
@@ -430,6 +448,15 @@ export default function App() {
           )}
         </div>
 
+        {(sel.overallConsensus || sel.stipulations || sel.nextSteps) && (
+          <div style={{ border: "2px solid #e4d8c4", borderRadius: 10, padding: 20, background: "#fffdf9", display: "flex", flexDirection: "column", gap: 14 }}>
+            <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, color: "#1a1a1a" }}>Overall Consensus</div>
+            {sel.overallConsensus && <ConsensusBlock label="Consensus" text={sel.overallConsensus} />}
+            {sel.stipulations && <ConsensusBlock label="Stipulations" text={sel.stipulations} />}
+            {sel.nextSteps && <ConsensusBlock label="Next Steps" text={sel.nextSteps} />}
+          </div>
+        )}
+
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 4, alignItems: "center" }}>
           <Badge color={votingLocked ? "#555" : pastDue ? "#c06000" : "#1a7a1a"}>
             {votingLocked ? "CLOSED" : pastDue ? "PAST DUE" : "OPEN"}
@@ -437,7 +464,17 @@ export default function App() {
           <Badge color={GOLD}>{voteCount} / {BOARD_MEMBER_COUNT} voted</Badge>
           {sel.dueDate && <Badge color={GOLD}>Meeting: {fmtDate(sel.dueDate)}</Badge>}
           <button onClick={() => {
-            setEditForm({ title: sel.title, description: sel.description || "", submittedBy: sel.submittedBy || "", dueDate: sel.dueDate || "", fileUrl: sel.fileUrl || "", fileName: sel.fileName || "" });
+            setEditForm({
+              title: sel.title,
+              description: sel.description || "",
+              submittedBy: sel.submittedBy || "",
+              dueDate: sel.dueDate || "",
+              fileUrl: sel.fileUrl || "",
+              fileName: sel.fileName || "",
+              overallConsensus: sel.overallConsensus || "",
+              stipulations: sel.stipulations || "",
+              nextSteps: sel.nextSteps || "",
+            });
             setEditUploadStatus(sel.fileUrl ? "done" : "idle");
             setView("edit");
           }} style={{ ...outlineBtn, marginLeft: "auto", padding: "4px 12px", fontSize: 13 }}>Edit</button>
@@ -460,10 +497,10 @@ export default function App() {
               {members.map(m => {
                 const v = sel.votes?.[m];
                 const meetingChange = v?.note?.includes("[Changed in meeting");
-                const prevMatch = v?.note?.match(/\[Changed in meeting � was: ([^\]]+)\]/);
+                const prevMatch = v?.note?.match(/\[Changed in meeting — was: ([^\]]+)\]/);
                 const previousChoice = prevMatch?.[1];
                 const displayNote = v?.note
-                  ? v.note.replace(/ — \[Changed in meeting[^\]]*\]/, "").replace(/\[Changed in meeting[^\]]*\]/, "").trim()
+                  ? v.note.replace(/ â€” \[Changed in meeting[^\]]*\]/, "").replace(/\[Changed in meeting[^\]]*\]/, "").trim()
                   : undefined;
                 return (
                   <div key={m} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", borderTop: "1px solid #eee" }}>
@@ -480,7 +517,7 @@ export default function App() {
                       {displayNote && <div style={{ color: "#555", fontSize: 13, fontFamily: OPEN, marginTop: 2 }}>"{displayNote}"</div>}
                     </div>
                     <span style={{ fontWeight: "700", fontFamily: OPEN, color: v ? CHOICE_COLOR[v.choice] : "#aaa", fontSize: 15, marginLeft: 16, whiteSpace: "nowrap" }}>
-                      {v ? v.choice : "—"}
+                      {v ? v.choice : "â€”"}
                     </span>
                   </div>
                 );
@@ -501,12 +538,12 @@ export default function App() {
             </div>
             {pastDue && (
               <div style={{ background: "#fff3cd", border: "1px solid #856404", borderRadius: 8, padding: "10px 14px", fontSize: 13, fontFamily: OPEN, color: "#856404", marginBottom: 16 }}>
-                ⚠️ The meeting date has passed. Votes will be marked as <strong>Changed in meeting</strong>. Members who voted electronically can also change their vote here.
+                âš ï¸ The meeting date has passed. Votes will be marked as <strong>Changed in meeting</strong>. Members who voted electronically can also change their vote here.
               </div>
             )}
             <label style={{ ...lStyle, display: "block", marginBottom: 14 }}>Who is voting?</label>
             <select value={voteForm.voter} onChange={e => setVoteForm(p => ({ ...p, voter: e.target.value, choice: "", note: "" }))} style={{ ...iStyle, marginBottom: 14, color: voteForm.voter ? "#1a1a1a" : "#999" }}>
-              <option value="">— Select your name —</option>
+              <option value="">â€” Select your name â€”</option>
               {members.map(m => {
                 const voted = !!sel.votes?.[m];
                 // When past due, allow re-voting (vote changed in meeting)
@@ -544,13 +581,13 @@ export default function App() {
                   ...btnStyle, width: "100%", padding: "14px",
                   opacity: (voteForm.choice && !syncing) ? 1 : 0.4,
                   cursor: (voteForm.choice && !syncing) ? "pointer" : "default"
-                }}>{syncing ? "Saving…" : pastDue ? "Submit Post-Meeting Vote" : "Submit Vote"}</button>
+                }}>{syncing ? "Savingâ€¦" : pastDue ? "Submit Post-Meeting Vote" : "Submit Vote"}</button>
               </>
             )}
 
             {voterAlreadyVoted && !pastDue && (
               <div style={{ background: "#f0f0f0", borderRadius: 8, padding: "12px 16px", fontSize: 15, fontFamily: OPEN, color: "#555" }}>
-                ✓ <strong>{voteForm.voter}</strong> has already voted <strong style={{ color: CHOICE_COLOR[sel.votes[voteForm.voter].choice] }}>{sel.votes[voteForm.voter].choice}</strong> on this topic.
+                âœ“ <strong>{voteForm.voter}</strong> has already voted <strong style={{ color: CHOICE_COLOR[sel.votes[voteForm.voter].choice] }}>{sel.votes[voteForm.voter].choice}</strong> on this topic.
               </div>
             )}
           </div>
@@ -588,7 +625,7 @@ export default function App() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: "center", fontFamily: OPEN, color: "#888", padding: "60px 0", fontSize: 15 }}>Loading…</div>
+        <div style={{ textAlign: "center", fontFamily: OPEN, color: "#888", padding: "60px 0", fontSize: 15 }}>Loadingâ€¦</div>
       ) : (
         <>
           {openTopics.length > 0 && (
@@ -627,7 +664,7 @@ function TopicRow({ t, onClick }) {
     >
       <div>
         <div style={{ fontSize: 16, fontWeight: "800", fontFamily: OPEN, color: "#1a1a1a" }}>{t.title}</div>
-        <div style={{ fontSize: 13, fontFamily: OPEN, color: "#666", marginTop: 3 }}>{voteCount} / {BOARD_MEMBER_COUNT} voted · {fmtDate(t.dueDate)}</div>
+        <div style={{ fontSize: 13, fontFamily: OPEN, color: "#666", marginTop: 3 }}>{voteCount} / {BOARD_MEMBER_COUNT} voted Â· {fmtDate(t.dueDate)}</div>
       </div>
       <span style={{
         fontSize: 13, fontFamily: OPEN, fontWeight: "600", padding: "4px 12px", borderRadius: 20, whiteSpace: "nowrap", marginLeft: 12,
@@ -645,7 +682,7 @@ function Page({ title, onBack, children }) {
   return (
     <div style={{ fontFamily: OPEN, minHeight: "100vh", background: CREAM }}>
       <div style={{ background: GOLD, padding: "16px 20px", textAlign: "center", position: "relative" }}>
-        <button onClick={onBack} style={{ background: "none", border: "none", color: "#fff", fontSize: 20, cursor: "pointer", padding: 0, lineHeight: 1, opacity: 0.85, position: "absolute", left: 20, top: "50%", transform: "translateY(-50%)" }}>←</button>
+        <button onClick={onBack} style={{ background: "none", border: "none", color: "#fff", fontSize: 20, cursor: "pointer", padding: 0, lineHeight: 1, opacity: 0.85, position: "absolute", left: 20, top: "50%", transform: "translateY(-50%)" }}>â†</button>
         <div style={{ fontSize: 10, fontFamily: SERIF, color: "rgba(255,255,255,0.8)", textTransform: "uppercase", letterSpacing: 3, marginBottom: 2 }}>North Star House</div>
         <h2 style={{ fontSize: 22, margin: 0, fontWeight: "500", fontFamily: SERIF, color: "#fff", letterSpacing: 0.3 }}>{title || "Board Voting"}</h2>
       </div>
@@ -656,6 +693,15 @@ function Page({ title, onBack, children }) {
 
 function Badge({ color, children }) {
   return <span style={{ fontSize: 12, fontFamily: OPEN, fontWeight: "600", padding: "4px 10px", borderRadius: 20, background: color, color: "#fff" }}>{children}</span>;
+}
+
+function ConsensusBlock({ label, text }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ fontSize: 11, fontWeight: "700", fontFamily: OPEN, textTransform: "uppercase", letterSpacing: 1.2, color: GOLD }}>{label}</div>
+      <div style={{ fontSize: 15, fontFamily: OPEN, color: "#444", lineHeight: 1.7, whiteSpace: "pre-wrap" }}>{text}</div>
+    </div>
+  );
 }
 
 const btnStyle = { background: GOLD, color: "#fff", border: "none", borderRadius: 8, padding: "12px 18px", fontSize: 15, cursor: "pointer", fontFamily: OPEN, fontWeight: "600" };

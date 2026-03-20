@@ -55,6 +55,15 @@ function updateTopic(data) {
       if (data.fileName !== undefined) {
         sheet.getRange(rowNum, (colMap.fileName || 8) + 1).setValue(data.fileName);
       }
+      if (data.overallConsensus !== undefined && colMap.overallConsensus !== undefined) {
+        sheet.getRange(rowNum, colMap.overallConsensus + 1).setValue(data.overallConsensus);
+      }
+      if (data.stipulations !== undefined && colMap.stipulations !== undefined) {
+        sheet.getRange(rowNum, colMap.stipulations + 1).setValue(data.stipulations);
+      }
+      if (data.nextSteps !== undefined && colMap.nextSteps !== undefined) {
+        sheet.getRange(rowNum, colMap.nextSteps + 1).setValue(data.nextSteps);
+      }
 
       return { updated: true, topicId: data.topicId };
     }
