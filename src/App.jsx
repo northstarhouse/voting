@@ -438,7 +438,7 @@ export default function App() {
       <Page title="" onBack={() => { setVoteForm({ voter: "", choice: "", note: "" }); setView("home"); }}>
         {/* Topic Info Box */}
         <div style={{ borderLeft: `4px solid ${GOLD}`, borderRadius: 4, background: "#fff", padding: "20px 24px", boxShadow: "0 1px 4px rgba(0,0,0,0.08)", display: "flex", flexDirection: "column", gap: 14 }}>
-          <div style={{ fontSize: 10, fontWeight: "700", fontFamily: OPEN, textTransform: "uppercase", letterSpacing: 2, color: GOLD }}>Motion</div>
+          <div style={{ fontSize: 10, fontWeight: "700", fontFamily: OPEN, textTransform: "uppercase", letterSpacing: 2, color: GOLD }}>Item Topic</div>
           <div style={{ fontSize: 19, fontWeight: "800", fontFamily: OPEN, color: "#1a1a1a", lineHeight: 1.3 }}>{sel.title}</div>
 
           {sel.description && (
