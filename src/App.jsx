@@ -48,7 +48,9 @@ function fmtDate(iso) {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-const CHOICE_COLOR = { Yes: "#1a7a1a", No: "#c0392b", Abstain: "#666" };
+const CHOICE_COLOR = { Yes: "#1a7a1a", No: "#c0392b", Abstain: "#666", "Not in attendance": "#8e6c3a" };
+const STANDARD_VOTE_CHOICES = ["Yes", "No", "Abstain"];
+const POST_MEETING_VOTE_CHOICES = ["Yes", "No", "Abstain", "Not in attendance"];
 
 async function api(payload) {
   const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
@@ -397,7 +399,7 @@ export default function App() {
     const votingLocked = isVotingLocked(sel);
     const pastDue = isPastDue(sel);
     const voteCount = Object.keys(sel.votes || {}).length;
-    const tally = { Yes: 0, No: 0, Abstain: 0 };
+    const tally = { Yes: 0, No: 0, Abstain: 0, "Not in attendance": 0 };
     Object.values(sel.votes || {}).forEach(v => { if (tally[v.choice] !== undefined) tally[v.choice]++; });
     const voterAlreadyVoted = voteForm.voter && sel.votes?.[voteForm.voter];
 
@@ -446,8 +448,8 @@ export default function App() {
           {closed ? (
             <>
               <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, marginBottom: 14, color: "#1a1a1a" }}>Final Results</div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 20 }}>
-                {["Yes", "No", "Abstain"].map(c => (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 20 }}>
+                {POST_MEETING_VOTE_CHOICES.map(c => (
                   <div key={c} style={{ textAlign: "center", padding: "12px 8px", background: "#fff", borderRadius: 8, border: "1px solid #eee" }}>
                     <div style={{ fontSize: 30, fontWeight: "700", fontFamily: SERIF, color: CHOICE_COLOR[c] }}>{tally[c]}</div>
                     <div style={{ fontSize: 13, fontFamily: OPEN, color: "#555", marginTop: 2 }}>{c}</div>
@@ -458,7 +460,7 @@ export default function App() {
               {members.map(m => {
                 const v = sel.votes?.[m];
                 const meetingChange = v?.note?.includes("[Changed in meeting");
-                const prevMatch = v?.note?.match(/\[Changed in meeting — was: (\w+)\]/);
+                const prevMatch = v?.note?.match(/\[Changed in meeting � was: ([^\]]+)\]/);
                 const previousChoice = prevMatch?.[1];
                 const displayNote = v?.note
                   ? v.note.replace(/ — \[Changed in meeting[^\]]*\]/, "").replace(/\[Changed in meeting[^\]]*\]/, "").trim()
@@ -526,7 +528,7 @@ export default function App() {
                 )}
                 <label style={lStyle}>Your vote</label>
                 <div style={{ display: "flex", gap: 8, marginBottom: 14 }}>
-                  {["Yes", "No", "Abstain"].map(c => (
+                  {(pastDue ? POST_MEETING_VOTE_CHOICES : STANDARD_VOTE_CHOICES).map(c => (
                     <button key={c} onClick={() => setVoteForm(p => ({ ...p, choice: c }))} style={{
                       flex: 1, padding: "12px 0", fontSize: 15, fontWeight: "600", fontFamily: OPEN,
                       border: `2px solid ${voteForm.choice === c ? CHOICE_COLOR[c] : "#ccc"}`,
@@ -661,5 +663,6 @@ const outlineBtn = { background: "#fff", border: `2px solid ${GOLD}`, borderRadi
 const iStyle = { width: "100%", border: "2px solid #ccc", borderRadius: 8, padding: "10px 14px", fontSize: 15, outline: "none", boxSizing: "border-box", fontFamily: OPEN };
 const lStyle = { fontSize: 14, fontWeight: "600", color: "#333", marginBottom: 2, fontFamily: OPEN };
 const secLabel = { fontSize: 12, fontWeight: "700", textTransform: "uppercase", letterSpacing: 1.5, color: GOLD, marginBottom: 10, fontFamily: OPEN };
+
 
 
