@@ -121,8 +121,9 @@ export default function App() {
   const [syncing, setSyncing] = useState(false);
   const [view, setView] = useState("home");
   const [selId, setSelId] = useState(null);
-  const [form, setForm] = useState({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "", overallConsensus: "", stipulations: "", nextSteps: "" });
-  const [editForm, setEditForm] = useState({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "", overallConsensus: "", stipulations: "", nextSteps: "" });
+  const [form, setForm] = useState({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
+  const [editForm, setEditForm] = useState({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
+  const [postMeetingForm, setPostMeetingForm] = useState({ overallConsensus: "", stipulations: "", nextSteps: "" });
   const [voteForm, setVoteForm] = useState({ voter: "", choice: "", note: "" });
   const [newMember, setNewMember] = useState("");
   const [toast, setToast] = useState(null);
@@ -160,6 +161,16 @@ export default function App() {
     }
   }, [view]);
 
+  useEffect(() => {
+    if (view === "topic" && sel) {
+      setPostMeetingForm({
+        overallConsensus: sel.overallConsensus || "",
+        stipulations: sel.stipulations || "",
+        nextSteps: sel.nextSteps || "",
+      });
+    }
+  }, [view, sel]);
+
   function toast_(msg) { setToast(msg); setTimeout(() => setToast(null), 6000); }
 
   async function loadTopics() {
@@ -193,11 +204,8 @@ export default function App() {
         totalMembers: BOARD_MEMBER_COUNT,
         fileUrl: form.fileUrl || "",
         fileName: form.fileName || "",
-        overallConsensus: form.overallConsensus.trim(),
-        stipulations: form.stipulations.trim(),
-        nextSteps: form.nextSteps.trim(),
       });
-      setForm({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "", overallConsensus: "", stipulations: "", nextSteps: "" });
+      setForm({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
       if (descRef.current) descRef.current.innerHTML = "";
       setUploadStatus("idle");
       setView("home");
@@ -245,9 +253,6 @@ export default function App() {
         dueDate: editForm.dueDate,
         fileUrl: editForm.fileUrl || "",
         fileName: editForm.fileName || "",
-        overallConsensus: editForm.overallConsensus.trim(),
-        stipulations: editForm.stipulations.trim(),
-        nextSteps: editForm.nextSteps.trim(),
       });
       setView("topic");
       toast_("Topic updated.");
@@ -288,6 +293,26 @@ export default function App() {
       toast_("Topic closed.");
     } catch (err) {
       toast_(err.message || "Failed to close topic.");
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  async function savePostMeetingUpdate() {
+    if (!sel) return;
+    setSyncing(true);
+    try {
+      await api({
+        action: "updateTopic",
+        topicId: sel.id,
+        overallConsensus: postMeetingForm.overallConsensus.trim(),
+        stipulations: postMeetingForm.stipulations.trim(),
+        nextSteps: postMeetingForm.nextSteps.trim(),
+      });
+      toast_("Post-meeting update saved.");
+      await loadTopics();
+    } catch (err) {
+      toast_(err.message || "Failed to save post-meeting update.");
     } finally {
       setSyncing(false);
     }
@@ -340,12 +365,6 @@ export default function App() {
         placeholder="Name" style={iStyle} />
       <label style={lStyle}>Meeting / Reveal Date (optional) - results visible after this date</label>
       <input type="date" value={form.dueDate} onChange={e => setForm(p => ({ ...p, dueDate: e.target.value }))} style={iStyle} />
-      <label style={lStyle}>Overall consensus (optional)</label>
-      <textarea value={form.overallConsensus} onChange={e => setForm(p => ({ ...p, overallConsensus: e.target.value }))} rows={3} placeholder="Summary of the board's overall consensus..." style={iStyle} />
-      <label style={lStyle}>Stipulations (optional)</label>
-      <textarea value={form.stipulations} onChange={e => setForm(p => ({ ...p, stipulations: e.target.value }))} rows={3} placeholder="Conditions, caveats, or required stipulations..." style={iStyle} />
-      <label style={lStyle}>Next steps (optional)</label>
-      <textarea value={form.nextSteps} onChange={e => setForm(p => ({ ...p, nextSteps: e.target.value }))} rows={3} placeholder="Follow-up actions, owners, or deadlines..." style={iStyle} />
       <label style={lStyle}>Attachment (optional)</label>
       <label style={{ display: "flex", alignItems: "center", gap: 12, border: `2px dashed ${uploadStatus === "done" ? "#1a7a1a" : uploadStatus === "error" ? "#c0392b" : "#ccc"}`, borderRadius: 8, padding: "12px 16px", cursor: uploadStatus === "uploading" ? "default" : "pointer", background: "#fafafa" }}>
         <input type="file" onChange={handleFileUpload} style={{ display: "none" }} disabled={uploadStatus === "uploading"} />
@@ -388,12 +407,6 @@ export default function App() {
         placeholder="Name" style={iStyle} />
       <label style={lStyle}>Meeting / Reveal Date (optional) - results visible after this date</label>
       <input type="date" value={editForm.dueDate} onChange={e => setEditForm(p => ({ ...p, dueDate: e.target.value }))} style={iStyle} />
-      <label style={lStyle}>Overall consensus (optional)</label>
-      <textarea value={editForm.overallConsensus} onChange={e => setEditForm(p => ({ ...p, overallConsensus: e.target.value }))} rows={3} placeholder="Summary of the board's overall consensus..." style={iStyle} />
-      <label style={lStyle}>Stipulations (optional)</label>
-      <textarea value={editForm.stipulations} onChange={e => setEditForm(p => ({ ...p, stipulations: e.target.value }))} rows={3} placeholder="Conditions, caveats, or required stipulations..." style={iStyle} />
-      <label style={lStyle}>Next steps (optional)</label>
-      <textarea value={editForm.nextSteps} onChange={e => setEditForm(p => ({ ...p, nextSteps: e.target.value }))} rows={3} placeholder="Follow-up actions, owners, or deadlines..." style={iStyle} />
       <label style={lStyle}>Attachment (optional)</label>
       <label style={{ display: "flex", alignItems: "center", gap: 12, border: `2px dashed ${editUploadStatus === "done" ? "#1a7a1a" : editUploadStatus === "error" ? "#c0392b" : "#ccc"}`, borderRadius: 8, padding: "12px 16px", cursor: editUploadStatus === "uploading" ? "default" : "pointer", background: "#fafafa" }}>
         <input type="file" onChange={e => handleFileUpload(e, true)} style={{ display: "none" }} disabled={editUploadStatus === "uploading"} />
@@ -471,9 +484,6 @@ export default function App() {
               dueDate: sel.dueDate || "",
               fileUrl: sel.fileUrl || "",
               fileName: sel.fileName || "",
-              overallConsensus: sel.overallConsensus || "",
-              stipulations: sel.stipulations || "",
-              nextSteps: sel.nextSteps || "",
             });
             setEditUploadStatus(sel.fileUrl ? "done" : "idle");
             setView("edit");
@@ -590,6 +600,21 @@ export default function App() {
                 <strong>{voteForm.voter}</strong> has already voted <strong style={{ color: CHOICE_COLOR[sel.votes[voteForm.voter].choice] }}>{sel.votes[voteForm.voter].choice}</strong> on this topic.
               </div>
             )}
+          </div>
+        )}
+
+        {(pastDue || closed) && (
+          <div style={{ border: "2px solid #e4d8c4", borderRadius: 10, padding: 20, background: "#fffdf9", display: "flex", flexDirection: "column", gap: 12 }}>
+            <div style={{ fontWeight: "700", fontSize: 17, fontFamily: SERIF, color: "#1a1a1a" }}>Post-Meeting Update</div>
+            <label style={lStyle}>Overall consensus</label>
+            <textarea value={postMeetingForm.overallConsensus} onChange={e => setPostMeetingForm(p => ({ ...p, overallConsensus: e.target.value }))} rows={3} placeholder="Summary of the board's overall consensus..." style={iStyle} />
+            <label style={lStyle}>Stipulations</label>
+            <textarea value={postMeetingForm.stipulations} onChange={e => setPostMeetingForm(p => ({ ...p, stipulations: e.target.value }))} rows={3} placeholder="Conditions, caveats, or required stipulations..." style={iStyle} />
+            <label style={lStyle}>Next steps</label>
+            <textarea value={postMeetingForm.nextSteps} onChange={e => setPostMeetingForm(p => ({ ...p, nextSteps: e.target.value }))} rows={3} placeholder="Follow-up actions, owners, or deadlines..." style={iStyle} />
+            <button onClick={savePostMeetingUpdate} disabled={syncing} style={{ ...btnStyle, width: "100%", padding: "14px", opacity: syncing ? 0.6 : 1 }}>
+              {syncing ? "Saving..." : "Save Post-Meeting Update"}
+            </button>
           </div>
         )}
 
