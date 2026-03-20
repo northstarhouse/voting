@@ -507,22 +507,24 @@ export default function App() {
                   ? v.note.replace(/ - \[Changed in meeting[^\]]*\]/, "").replace(/\[Changed in meeting[^\]]*\]/, "").trim()
                   : undefined;
                 return (
-                  <div key={m} style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", padding: "10px 0", borderTop: "1px solid #eee" }}>
-                    <div>
-                      <div style={{ fontWeight: "600", fontSize: 15, fontFamily: OPEN, display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                        {m}
-                        {meetingChange && <span style={{ fontSize: 11, fontWeight: "600", padding: "2px 8px", borderRadius: 12, background: "#fff3cd", color: "#856404", border: "1px solid #856404" }}>Changed in meeting</span>}
+                  <div key={m} style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) 128px", gap: 16, alignItems: "start", padding: "12px 0", borderTop: "1px solid #eee" }}>
+                    <div style={{ minWidth: 0, display: "flex", flexDirection: "column", gap: 6 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, minHeight: 24 }}>
+                        <div style={{ fontWeight: "600", fontSize: 15, fontFamily: OPEN, color: "#1a1a1a" }}>{m}</div>
+                        {meetingChange && <span style={{ fontSize: 11, fontWeight: "600", padding: "2px 8px", borderRadius: 12, background: "#fff3cd", color: "#856404", border: "1px solid #856404", whiteSpace: "nowrap" }}>Changed in meeting</span>}
                       </div>
-                      {previousChoice && (
-                        <div style={{ fontSize: 12, fontFamily: OPEN, color: "#888", marginTop: 2 }}>
-                          Previously: <span style={{ color: CHOICE_COLOR[previousChoice], fontWeight: "600", textDecoration: "line-through" }}>{previousChoice}</span>
-                        </div>
-                      )}
-                      {displayNote && <div style={{ color: "#555", fontSize: 13, fontFamily: OPEN, marginTop: 2 }}>"{displayNote}"</div>}
+                      <div style={{ minHeight: 18, fontSize: 12, fontFamily: OPEN, color: "#888" }}>
+                        {previousChoice ? <>Previously: <span style={{ color: CHOICE_COLOR[previousChoice], fontWeight: "600", textDecoration: "line-through" }}>{previousChoice}</span></> : null}
+                      </div>
+                      <div style={{ minHeight: 20, color: "#555", fontSize: 13, fontFamily: OPEN, lineHeight: 1.5 }}>
+                        {displayNote ? `"${displayNote}"` : null}
+                      </div>
                     </div>
-                    <span style={{ fontWeight: "700", fontFamily: OPEN, color: v ? CHOICE_COLOR[v.choice] : "#aaa", fontSize: 15, marginLeft: 16, whiteSpace: "nowrap" }}>
-                      {v ? v.choice : "-"}
-                    </span>
+                    <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", minHeight: "100%" }}>
+                      <span style={{ fontWeight: "700", fontFamily: OPEN, color: v ? CHOICE_COLOR[v.choice] : "#aaa", fontSize: 15, whiteSpace: "nowrap", textAlign: "right" }}>
+                        {v ? v.choice : "-"}
+                      </span>
+                    </div>
                   </div>
                 );
               })}
