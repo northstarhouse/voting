@@ -131,6 +131,7 @@ export default function App() {
   const [editUploadStatus, setEditUploadStatus] = useState("idle");
   const descRef = useRef(null);
   const editDescRef = useRef(null);
+  const sel = topics.find(t => t.id === selId);
 
   function handlePaste(e) {
     e.preventDefault();
@@ -318,7 +319,6 @@ export default function App() {
     }
   }
 
-  const sel = topics.find(t => t.id === selId);
   const openTopics = topics.filter(t => !isClosed(t));
   const closedTopics = topics.filter(t => isClosed(t));
 
