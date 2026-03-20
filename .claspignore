@@ -1,0 +1,14 @@
+node_modules/**
+dist/**
+src/**
+public/**
+.github/**
+.git/**
+.gitignore
+index.html
+vite.config.js
+eslint.config.js
+README.md
+google-apps-script-updateTopic.js
+package-lock.json
+package.json
