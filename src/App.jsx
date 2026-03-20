@@ -170,7 +170,7 @@ export default function App() {
         nextSteps: sel.nextSteps || "",
       });
     }
-  }, [view, sel]);
+  }, [view, selId]);
 
   function toast_(msg) { setToast(msg); setTimeout(() => setToast(null), 6000); }
 
