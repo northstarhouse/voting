@@ -3,7 +3,8 @@ import { createClient } from "@supabase/supabase-js";
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || "https://uvzwhhwzelaelfhfkvdb.supabase.co";
 const supabaseAnonKey =
   import.meta.env.VITE_SUPABASE_ANON_KEY ||
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  "sb_publishable_EbFMfEbyEp3gASl-GZm3tQ_LnPEe5do";
 
 export const SUPABASE_STORAGE_BUCKET = "topic-attachments";
 
