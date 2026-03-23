@@ -1,31 +1,22 @@
-# React + Vite
+# Board Voting
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This app now uses Supabase directly from the Vite frontend for topics, votes, and attachment uploads.
 
-Currently, two official plugins are available:
+## Local setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Copy `.env.example` to `.env`.
+2. Set either `VITE_SUPABASE_ANON_KEY` or `VITE_SUPABASE_PUBLISHABLE_KEY` to your project's public client key.
+3. Run the SQL in [supabase/schema.sql](/c:/Users/Thewr/Claude/voting/supabase/schema.sql) in the Supabase SQL editor.
+4. Start the app with `npm run dev`.
 
-## React Compiler
+## Supabase resources used
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- `public.topics` stores each voting topic.
+- `public.votes` stores one vote per `(topic_id, voter)`.
+- `storage` bucket `topic-attachments` stores uploaded files.
 
-## Expanding the ESLint configuration
+## Notes
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
-
-## Google Apps Script Push Setup
-
-This repo now includes an `apps-script/` folder for `clasp`.
-
-1. Copy `.clasp.json.example` to `.clasp.json`.
-2. Replace `PASTE_YOUR_APPS_SCRIPT_ID_HERE` with the Apps Script project ID from Project Settings in Apps Script.
-3. Run `npm run gas:login`.
-4. Run `npm run gas:push`.
-
-Notes:
-
-- `apps-script/Code.js` contains the `updateTopic` function that your frontend calls through `action: "updateTopic"`.
-- `apps-script/appsscript.json` is the Apps Script manifest.
-- After pushing code, deploy a new web app version in Apps Script if your existing deployment does not auto-pick the new code.
+- The app currently keeps board member names in the frontend, matching the previous behavior.
+- The SQL policies in [supabase/schema.sql](/c:/Users/Thewr/Claude/voting/supabase/schema.sql) allow public read/write access with the anon key because the current app has no authentication layer.
+- The old Google Apps Script files are still present in the repo, but the frontend no longer calls them.

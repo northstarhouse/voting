@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef } from "react";
 import "./App.css";
+import { requireSupabase, SUPABASE_STORAGE_BUCKET } from "./supabase";
 
 const cardoLink = document.createElement("link");
 cardoLink.rel = "stylesheet";
 cardoLink.href = "https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Cardo:ital,wght@0,400;0,700;1,400&display=swap";
 document.head.appendChild(cardoLink);
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwrsP-Nnq_hp5QWWks6BA5ZnuS2B9E_KQyFskRQC0PSehb6NcspJhyO4wlqD3-VfsEwxg/exec";
 const INITIAL_MEMBERS = ["Ken", "Wyn", "Paula", "Rick", "Jeff", "Rich"];
 const BOARD_MEMBER_COUNT = 6;
 const GOLD = "#886c44";
@@ -52,15 +52,6 @@ const CHOICE_COLOR = { Yes: "#1a7a1a", No: "#c0392b", Abstain: "#666", "Not in a
 const STANDARD_VOTE_CHOICES = ["Yes", "No", "Abstain"];
 const POST_MEETING_VOTE_CHOICES = ["Yes", "No", "Abstain", "Not in attendance"];
 
-async function api(payload) {
-  const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
-  const text = await res.text();
-  let data;
-  try { data = JSON.parse(text); } catch { throw new Error("Bad response: " + text.slice(0, 200)); }
-  if (data.error) throw new Error(data.error);
-  return data;
-}
-
 function renderText(text) {
   if (!text) return null;
   text = text.replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>');
@@ -105,13 +96,34 @@ function cleanHtml(html) {
     .replace(/^(<br>)+|(<br>)+$/g, '');
 }
 
-function fileToBase64(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
+function mapTopicRow(topic, votes) {
+  return {
+    id: topic.id,
+    title: topic.title || "",
+    description: topic.description || "",
+    dueDate: topic.due_date || "",
+    closed: !!topic.closed,
+    submittedBy: topic.submitted_by || "",
+    totalMembers: Number(topic.total_members || 0),
+    fileUrl: topic.file_url || "",
+    fileName: topic.file_name || "",
+    overallConsensus: topic.overall_consensus || "",
+    stipulations: topic.stipulations || "",
+    nextSteps: topic.next_steps || "",
+    votes,
+  };
+}
+
+function toVoteMap(voteRows) {
+  return voteRows.reduce((acc, vote) => {
+    if (!acc[vote.topic_id]) acc[vote.topic_id] = {};
+    acc[vote.topic_id][vote.voter] = {
+      choice: vote.choice || "",
+      note: vote.note || "",
+      at: vote.updated_at || vote.created_at || "",
+    };
+    return acc;
+  }, {});
 }
 
 export default function App() {
@@ -178,8 +190,22 @@ export default function App() {
 
   async function loadTopics() {
     try {
-      const data = await api({ action: "getTopics" });
-      setTopics(data.topics || []);
+      const supabase = requireSupabase();
+      const [{ data: topicRows, error: topicsError }, { data: voteRows, error: votesError }] = await Promise.all([
+        supabase
+          .from("topics")
+          .select("id, title, description, due_date, closed, submitted_by, total_members, file_url, file_name, overall_consensus, stipulations, next_steps, created_at")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("votes")
+          .select("topic_id, voter, choice, note, created_at, updated_at"),
+      ]);
+
+      if (topicsError) throw topicsError;
+      if (votesError) throw votesError;
+
+      const votesByTopic = toVoteMap(voteRows || []);
+      setTopics((topicRows || []).map((topic) => mapTopicRow(topic, votesByTopic[topic.id] || {})));
     } catch (err) {
       toast_(err.message || "Failed to load topics.");
     } finally {
@@ -197,17 +223,21 @@ export default function App() {
     if (!form.title.trim()) return;
     setSyncing(true);
     try {
+      const supabase = requireSupabase();
       const description = cleanHtml(descRef.current?.innerHTML || "");
-      await api({
-        action: "addTopic",
-        title: form.title.trim(),
-        description,
-        submittedBy: form.submittedBy.trim(),
-        dueDate: form.dueDate,
-        totalMembers: BOARD_MEMBER_COUNT,
-        fileUrl: form.fileUrl || "",
-        fileName: form.fileName || "",
-      });
+      const { error } = await supabase
+        .from("topics")
+        .insert({
+          title: form.title.trim(),
+          description,
+          submitted_by: form.submittedBy.trim(),
+          due_date: form.dueDate || null,
+          total_members: BOARD_MEMBER_COUNT,
+          file_url: form.fileUrl || null,
+          file_name: form.fileName || null,
+        });
+
+      if (error) throw error;
       setForm({ title: "", description: "", submittedBy: "", dueDate: "", fileUrl: "", fileName: "" });
       if (descRef.current) descRef.current.innerHTML = "";
       setUploadStatus("idle");
@@ -226,14 +256,29 @@ export default function App() {
     if (!file) return;
     isEdit ? setEditUploadStatus("uploading") : setUploadStatus("uploading");
     try {
-      const dataUrl = await fileToBase64(file);
-      const base64 = dataUrl.split(",")[1];
-      const result = await api({ action: "uploadFile", fileName: file.name, fileData: base64, mimeType: file.type || "application/octet-stream" });
+      const supabase = requireSupabase();
+      const ext = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
+      const path = `${Date.now()}-${crypto.randomUUID()}${ext}`;
+      const { error: uploadError } = await supabase
+        .storage
+        .from(SUPABASE_STORAGE_BUCKET)
+        .upload(path, file, {
+          contentType: file.type || "application/octet-stream",
+          upsert: false,
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase
+        .storage
+        .from(SUPABASE_STORAGE_BUCKET)
+        .getPublicUrl(path);
+
       if (isEdit) {
-        setEditForm(p => ({ ...p, fileUrl: result.url, fileName: result.name }));
+        setEditForm(p => ({ ...p, fileUrl: publicUrlData.publicUrl, fileName: file.name }));
         setEditUploadStatus("done");
       } else {
-        setForm(p => ({ ...p, fileUrl: result.url, fileName: result.name }));
+        setForm(p => ({ ...p, fileUrl: publicUrlData.publicUrl, fileName: file.name }));
         setUploadStatus("done");
       }
     } catch (err) {
@@ -246,17 +291,21 @@ export default function App() {
     if (!editForm.title.trim()) return;
     setSyncing(true);
     try {
+      const supabase = requireSupabase();
       const description = cleanHtml(editDescRef.current?.innerHTML || "");
-      await api({
-        action: "updateTopic",
-        topicId: sel.id,
-        title: editForm.title.trim(),
-        description,
-        submittedBy: editForm.submittedBy.trim(),
-        dueDate: editForm.dueDate,
-        fileUrl: editForm.fileUrl || "",
-        fileName: editForm.fileName || "",
-      });
+      const { error } = await supabase
+        .from("topics")
+        .update({
+          title: editForm.title.trim(),
+          description,
+          submitted_by: editForm.submittedBy.trim(),
+          due_date: editForm.dueDate || null,
+          file_url: editForm.fileUrl || null,
+          file_name: editForm.fileName || null,
+        })
+        .eq("id", sel.id);
+
+      if (error) throw error;
       setView("topic");
       toast_("Topic updated.");
       loadTopics();
@@ -276,7 +325,38 @@ export default function App() {
       ? [voteForm.note.trim(), previousVote ? `[Changed in meeting - was: ${previousVote.choice}]` : "[Changed in meeting]"].filter(Boolean).join(" - ")
       : voteForm.note;
     try {
-      await api({ action: "castVote", topicId, voter: voteForm.voter, choice: voteForm.choice, note: noteWithTag });
+      const supabase = requireSupabase();
+      const totalMembers = Number(topic?.totalMembers || BOARD_MEMBER_COUNT);
+
+      const { error: voteError } = await supabase
+        .from("votes")
+        .upsert({
+          topic_id: topicId,
+          voter: voteForm.voter,
+          choice: voteForm.choice,
+          note: noteWithTag || "",
+        }, {
+          onConflict: "topic_id,voter",
+        });
+
+      if (voteError) throw voteError;
+
+      const { count, error: countError } = await supabase
+        .from("votes")
+        .select("*", { count: "exact", head: true })
+        .eq("topic_id", topicId);
+
+      if (countError) throw countError;
+
+      if ((count || 0) >= totalMembers) {
+        const { error: closeError } = await supabase
+          .from("topics")
+          .update({ closed: true })
+          .eq("id", topicId);
+
+        if (closeError) throw closeError;
+      }
+
       setVoteForm({ voter: "", choice: "", note: "" });
       setView("home");
       toast_("Vote recorded.");
@@ -291,7 +371,13 @@ export default function App() {
   async function closeTopic(topicId) {
     setSyncing(true);
     try {
-      await api({ action: "closeTopic", topicId });
+      const supabase = requireSupabase();
+      const { error } = await supabase
+        .from("topics")
+        .update({ closed: true })
+        .eq("id", topicId);
+
+      if (error) throw error;
       await loadTopics();
       toast_("Topic closed.");
     } catch (err) {
@@ -305,13 +391,17 @@ export default function App() {
     if (!sel) return;
     setSyncing(true);
     try {
-      await api({
-        action: "updateTopic",
-        topicId: sel.id,
-        overallConsensus: postMeetingForm.overallConsensus.trim(),
-        stipulations: postMeetingForm.stipulations.trim(),
-        nextSteps: postMeetingForm.nextSteps.trim(),
-      });
+      const supabase = requireSupabase();
+      const { error } = await supabase
+        .from("topics")
+        .update({
+          overall_consensus: postMeetingForm.overallConsensus.trim(),
+          stipulations: postMeetingForm.stipulations.trim(),
+          next_steps: postMeetingForm.nextSteps.trim(),
+        })
+        .eq("id", sel.id);
+
+      if (error) throw error;
       toast_("Post-meeting update saved.");
       await loadTopics();
       setPostMeetingOpen(false);
