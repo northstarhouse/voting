@@ -101,26 +101,28 @@ function mapTopicRow(topic, votes) {
     id: topic.id,
     title: topic.title || "",
     description: topic.description || "",
-    dueDate: topic.dueDate || "",
+    dueDate: topic.dueDate || topic.due_date || "",
     closed: topic.closed === true || String(topic.closed).toLowerCase() === "true",
-    submittedBy: topic.submittedBy || "",
-    totalMembers: Number(topic.totalMembers || 0),
-    fileUrl: topic.fileUrl || "",
-    fileName: topic.fileName || "",
-    overallConsensus: topic.overallConsensus || "",
+    submittedBy: topic.submittedBy || topic.submitted_by || "",
+    totalMembers: Number(topic.totalMembers || topic.total_members || 0),
+    fileUrl: topic.fileUrl || topic.file_url || "",
+    fileName: topic.fileName || topic.file_name || "",
+    overallConsensus: topic.overallConsensus || topic.overall_consensus || "",
     stipulations: topic.stipulations || "",
-    nextSteps: topic.nextSteps || "",
+    nextSteps: topic.nextSteps || topic.next_steps || "",
     votes,
   };
 }
 
 function toVoteMap(voteRows) {
   return voteRows.reduce((acc, vote) => {
-    if (!acc[vote.topicId]) acc[vote.topicId] = {};
-    acc[vote.topicId][vote.voter] = {
+    const topicId = vote.topicId || vote.topic_id;
+    if (!topicId) return acc;
+    if (!acc[topicId]) acc[topicId] = {};
+    acc[topicId][vote.voter] = {
       choice: vote.choice || "",
       note: vote.note || "",
-      at: vote.timestamp || "",
+      at: vote.timestamp || vote.updated_at || vote.created_at || "",
     };
     return acc;
   }, {});
@@ -193,12 +195,12 @@ export default function App() {
       const supabase = requireSupabase();
       const [{ data: topicRows, error: topicsError }, { data: voteRows, error: votesError }] = await Promise.all([
         supabase
-          .from("Board Voting Items")
-          .select("id, title, description, dueDate, closed, submittedBy, totalMembers, fileUrl, fileName, overallConsensus, stipulations, nextSteps, row_id")
-          .order("row_id", { ascending: false }),
+          .from("topics")
+          .select("id, title, description, dueDate:due_date, closed, submittedBy:submitted_by, totalMembers:total_members, fileUrl:file_url, fileName:file_name, overallConsensus:overall_consensus, stipulations, nextSteps:next_steps, created_at")
+          .order("created_at", { ascending: false }),
         supabase
-          .from("Board-Votes")
-          .select("topicId, voter, choice, note, timestamp"),
+          .from("votes")
+          .select("topicId:topic_id, voter, choice, note, timestamp:updated_at"),
       ]);
 
       if (topicsError) throw topicsError;
@@ -225,19 +227,17 @@ export default function App() {
     try {
       const supabase = requireSupabase();
       const description = cleanHtml(descRef.current?.innerHTML || "");
-      const topicId = crypto.randomUUID();
       const { error } = await supabase
-        .from("Board Voting Items")
+        .from("topics")
         .insert({
-          id: topicId,
           title: form.title.trim(),
           description,
-          submittedBy: form.submittedBy.trim(),
-          dueDate: form.dueDate || "",
-          totalMembers: String(BOARD_MEMBER_COUNT),
-          fileUrl: form.fileUrl || "",
-          fileName: form.fileName || "",
-          closed: "false",
+          submitted_by: form.submittedBy.trim(),
+          due_date: form.dueDate || null,
+          total_members: BOARD_MEMBER_COUNT,
+          file_url: form.fileUrl || null,
+          file_name: form.fileName || null,
+          closed: false,
         });
 
       if (error) throw error;
@@ -297,14 +297,14 @@ export default function App() {
       const supabase = requireSupabase();
       const description = cleanHtml(editDescRef.current?.innerHTML || "");
       const { error } = await supabase
-        .from("Board Voting Items")
+        .from("topics")
         .update({
           title: editForm.title.trim(),
           description,
-          submittedBy: editForm.submittedBy.trim(),
-          dueDate: editForm.dueDate || "",
-          fileUrl: editForm.fileUrl || "",
-          fileName: editForm.fileName || "",
+          submitted_by: editForm.submittedBy.trim(),
+          due_date: editForm.dueDate || null,
+          file_url: editForm.fileUrl || null,
+          file_name: editForm.fileName || null,
         })
         .eq("id", sel.id);
 
@@ -332,45 +332,45 @@ export default function App() {
       const totalMembers = Number(topic?.totalMembers || BOARD_MEMBER_COUNT);
       const timestamp = new Date().toISOString();
       const { data: existingVote, error: existingVoteError } = await supabase
-        .from("Board-Votes")
-        .select("id")
-        .eq("topicId", topicId)
+        .from("votes")
+        .select("topic_id, voter")
+        .eq("topic_id", topicId)
         .eq("voter", voteForm.voter)
         .maybeSingle();
 
       if (existingVoteError) throw existingVoteError;
 
       const votePayload = {
-        topicId,
+        topic_id: topicId,
         voter: voteForm.voter,
         choice: voteForm.choice,
         note: noteWithTag || "",
-        timestamp,
-        changed_in_meeting: isPastDue(topic),
+        updated_at: timestamp,
       };
 
       const { error: voteError } = existingVote
         ? await supabase
-            .from("Board-Votes")
+            .from("votes")
             .update(votePayload)
-            .eq("id", existingVote.id)
+            .eq("topic_id", topicId)
+            .eq("voter", voteForm.voter)
         : await supabase
-            .from("Board-Votes")
+            .from("votes")
             .insert(votePayload);
 
       if (voteError) throw voteError;
 
       const { count, error: countError } = await supabase
-        .from("Board-Votes")
+        .from("votes")
         .select("*", { count: "exact", head: true })
-        .eq("topicId", topicId);
+        .eq("topic_id", topicId);
 
       if (countError) throw countError;
 
       if ((count || 0) >= totalMembers) {
         const { error: closeError } = await supabase
-          .from("Board Voting Items")
-          .update({ closed: "true" })
+          .from("topics")
+          .update({ closed: true })
           .eq("id", topicId);
 
         if (closeError) throw closeError;
@@ -392,8 +392,8 @@ export default function App() {
     try {
       const supabase = requireSupabase();
       const { error } = await supabase
-        .from("Board Voting Items")
-        .update({ closed: "true" })
+        .from("topics")
+        .update({ closed: true })
         .eq("id", topicId);
 
       if (error) throw error;
@@ -412,11 +412,11 @@ export default function App() {
     try {
       const supabase = requireSupabase();
       const { error } = await supabase
-        .from("Board Voting Items")
+        .from("topics")
         .update({
-          overallConsensus: postMeetingForm.overallConsensus.trim(),
+          overall_consensus: postMeetingForm.overallConsensus.trim(),
           stipulations: postMeetingForm.stipulations.trim(),
-          nextSteps: postMeetingForm.nextSteps.trim(),
+          next_steps: postMeetingForm.nextSteps.trim(),
         })
         .eq("id", sel.id);
 
