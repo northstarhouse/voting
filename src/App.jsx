@@ -128,6 +128,63 @@ function toVoteMap(voteRows) {
   }, {});
 }
 
+function isMissingColumnError(error, columnName) {
+  const message = String(error?.message || error?.details || "");
+  return message.includes(columnName) && message.toLowerCase().includes("column");
+}
+
+async function listVotes(supabase) {
+  const snakeCaseResult = await supabase
+    .from("votes")
+    .select("topicId:topic_id, voter, choice, note, timestamp:updated_at");
+  if (!snakeCaseResult.error || !isMissingColumnError(snakeCaseResult.error, "topic_id")) return snakeCaseResult;
+  return supabase
+    .from("votes")
+    .select("topicId, voter, choice, note, timestamp:updated_at");
+}
+
+async function findExistingVote(supabase, topicId, voter) {
+  const snakeCaseResult = await supabase
+    .from("votes")
+    .select("topic_id, voter")
+    .eq("topic_id", topicId)
+    .eq("voter", voter)
+    .maybeSingle();
+  if (!snakeCaseResult.error || !isMissingColumnError(snakeCaseResult.error, "topic_id")) {
+    return { ...snakeCaseResult, topicColumn: "topic_id" };
+  }
+  const camelCaseResult = await supabase
+    .from("votes")
+    .select("topicId, voter")
+    .eq("topicId", topicId)
+    .eq("voter", voter)
+    .maybeSingle();
+  return { ...camelCaseResult, topicColumn: "topicId" };
+}
+
+async function saveVote(supabase, topicColumn, topicId, voter, payload, existingVote) {
+  const votePayload = {
+    ...payload,
+    [topicColumn]: topicId,
+  };
+  return existingVote
+    ? supabase
+        .from("votes")
+        .update(votePayload)
+        .eq(topicColumn, topicId)
+        .eq("voter", voter)
+    : supabase
+        .from("votes")
+        .insert(votePayload);
+}
+
+async function countVotesForTopic(supabase, topicColumn, topicId) {
+  return supabase
+    .from("votes")
+    .select("*", { count: "exact", head: true })
+    .eq(topicColumn, topicId);
+}
+
 export default function App() {
   const [members, setMembers] = useState(INITIAL_MEMBERS);
   const [topics, setTopics] = useState([]);
@@ -198,9 +255,7 @@ export default function App() {
           .from("topics")
           .select("id, title, description, dueDate:due_date, closed, submittedBy:submitted_by, totalMembers:total_members, fileUrl:file_url, fileName:file_name, overallConsensus:overall_consensus, stipulations, nextSteps:next_steps, created_at")
           .order("created_at", { ascending: false }),
-        supabase
-          .from("votes")
-          .select("topicId:topic_id, voter, choice, note, timestamp:updated_at"),
+        listVotes(supabase),
       ]);
 
       if (topicsError) throw topicsError;
@@ -331,39 +386,22 @@ export default function App() {
       const supabase = requireSupabase();
       const totalMembers = Number(topic?.totalMembers || BOARD_MEMBER_COUNT);
       const timestamp = new Date().toISOString();
-      const { data: existingVote, error: existingVoteError } = await supabase
-        .from("votes")
-        .select("topic_id, voter")
-        .eq("topic_id", topicId)
-        .eq("voter", voteForm.voter)
-        .maybeSingle();
+      const { data: existingVote, error: existingVoteError, topicColumn } = await findExistingVote(supabase, topicId, voteForm.voter);
 
       if (existingVoteError) throw existingVoteError;
 
       const votePayload = {
-        topic_id: topicId,
         voter: voteForm.voter,
         choice: voteForm.choice,
         note: noteWithTag || "",
         updated_at: timestamp,
       };
 
-      const { error: voteError } = existingVote
-        ? await supabase
-            .from("votes")
-            .update(votePayload)
-            .eq("topic_id", topicId)
-            .eq("voter", voteForm.voter)
-        : await supabase
-            .from("votes")
-            .insert(votePayload);
+      const { error: voteError } = await saveVote(supabase, topicColumn, topicId, voteForm.voter, votePayload, existingVote);
 
       if (voteError) throw voteError;
 
-      const { count, error: countError } = await supabase
-        .from("votes")
-        .select("*", { count: "exact", head: true })
-        .eq("topic_id", topicId);
+      const { count, error: countError } = await countVotesForTopic(supabase, topicColumn, topicId);
 
       if (countError) throw countError;
 
