@@ -97,8 +97,11 @@ function cleanHtml(html) {
 }
 
 function mapTopicRow(topic, votes) {
+  const stableId = topic.id || String(topic.row_id || topic.title || crypto.randomUUID());
   return {
-    id: topic.id,
+    id: stableId,
+    rowId: topic.row_id || null,
+    voteTopicKey: topic.voteTopicKey || topic.title || "",
     title: topic.title || "",
     description: topic.description || "",
     dueDate: topic.dueDate || topic.due_date || "",
@@ -126,63 +129,6 @@ function toVoteMap(voteRows) {
     };
     return acc;
   }, {});
-}
-
-function isMissingColumnError(error, columnName) {
-  const message = String(error?.message || error?.details || "");
-  return message.includes(columnName) && message.toLowerCase().includes("column");
-}
-
-async function listVotes(supabase) {
-  const snakeCaseResult = await supabase
-    .from("votes")
-    .select("topicId:topic_id, voter, choice, note, timestamp:updated_at");
-  if (!snakeCaseResult.error || !isMissingColumnError(snakeCaseResult.error, "topic_id")) return snakeCaseResult;
-  return supabase
-    .from("votes")
-    .select("topicId, voter, choice, note, timestamp:updated_at");
-}
-
-async function findExistingVote(supabase, topicId, voter) {
-  const snakeCaseResult = await supabase
-    .from("votes")
-    .select("topic_id, voter")
-    .eq("topic_id", topicId)
-    .eq("voter", voter)
-    .maybeSingle();
-  if (!snakeCaseResult.error || !isMissingColumnError(snakeCaseResult.error, "topic_id")) {
-    return { ...snakeCaseResult, topicColumn: "topic_id" };
-  }
-  const camelCaseResult = await supabase
-    .from("votes")
-    .select("topicId, voter")
-    .eq("topicId", topicId)
-    .eq("voter", voter)
-    .maybeSingle();
-  return { ...camelCaseResult, topicColumn: "topicId" };
-}
-
-async function saveVote(supabase, topicColumn, topicId, voter, payload, existingVote) {
-  const votePayload = {
-    ...payload,
-    [topicColumn]: topicId,
-  };
-  return existingVote
-    ? supabase
-        .from("votes")
-        .update(votePayload)
-        .eq(topicColumn, topicId)
-        .eq("voter", voter)
-    : supabase
-        .from("votes")
-        .insert(votePayload);
-}
-
-async function countVotesForTopic(supabase, topicColumn, topicId) {
-  return supabase
-    .from("votes")
-    .select("*", { count: "exact", head: true })
-    .eq(topicColumn, topicId);
 }
 
 export default function App() {
@@ -252,17 +198,22 @@ export default function App() {
       const supabase = requireSupabase();
       const [{ data: topicRows, error: topicsError }, { data: voteRows, error: votesError }] = await Promise.all([
         supabase
-          .from("topics")
-          .select("id, title, description, dueDate:due_date, closed, submittedBy:submitted_by, totalMembers:total_members, fileUrl:file_url, fileName:file_name, overallConsensus:overall_consensus, stipulations, nextSteps:next_steps, created_at")
-          .order("created_at", { ascending: false }),
-        listVotes(supabase),
+          .from("Board Voting Items")
+          .select("title, description, dueDate, closed, submittedBy, totalMembers, fileUrl, fileName, overallConsensus, stipulations, nextSteps, row_id")
+          .order("row_id", { ascending: false }),
+        supabase
+          .from("Board-Votes")
+          .select("topicId, voter, choice, note, timestamp"),
       ]);
 
       if (topicsError) throw topicsError;
       if (votesError) throw votesError;
 
       const votesByTopic = toVoteMap(voteRows || []);
-      setTopics((topicRows || []).map((topic) => mapTopicRow(topic, votesByTopic[topic.id] || {})));
+      setTopics((topicRows || []).map((topic) => {
+        const mappedTopic = mapTopicRow(topic, votesByTopic[topic.title] || {});
+        return mappedTopic;
+      }));
     } catch (err) {
       toast_(err.message || "Failed to load topics.");
     } finally {
@@ -283,16 +234,16 @@ export default function App() {
       const supabase = requireSupabase();
       const description = cleanHtml(descRef.current?.innerHTML || "");
       const { error } = await supabase
-        .from("topics")
+        .from("Board Voting Items")
         .insert({
           title: form.title.trim(),
           description,
-          submitted_by: form.submittedBy.trim(),
-          due_date: form.dueDate || null,
-          total_members: BOARD_MEMBER_COUNT,
-          file_url: form.fileUrl || null,
-          file_name: form.fileName || null,
-          closed: false,
+          submittedBy: form.submittedBy.trim(),
+          dueDate: form.dueDate || "",
+          totalMembers: String(BOARD_MEMBER_COUNT),
+          fileUrl: form.fileUrl || "",
+          fileName: form.fileName || "",
+          closed: "false",
         });
 
       if (error) throw error;
@@ -352,18 +303,25 @@ export default function App() {
       const supabase = requireSupabase();
       const description = cleanHtml(editDescRef.current?.innerHTML || "");
       const { error } = await supabase
-        .from("topics")
+        .from("Board Voting Items")
         .update({
           title: editForm.title.trim(),
           description,
-          submitted_by: editForm.submittedBy.trim(),
-          due_date: editForm.dueDate || null,
-          file_url: editForm.fileUrl || null,
-          file_name: editForm.fileName || null,
+          submittedBy: editForm.submittedBy.trim(),
+          dueDate: editForm.dueDate || "",
+          fileUrl: editForm.fileUrl || "",
+          fileName: editForm.fileName || "",
         })
-        .eq("id", sel.id);
+        .eq("row_id", sel.rowId);
 
       if (error) throw error;
+      if (sel.title !== editForm.title.trim()) {
+        const { error: voteRenameError } = await supabase
+          .from("Board-Votes")
+          .update({ topicId: editForm.title.trim() })
+          .eq("topicId", sel.title);
+        if (voteRenameError) throw voteRenameError;
+      }
       setView("topic");
       toast_("Topic updated.");
       loadTopics();
@@ -378,6 +336,7 @@ export default function App() {
     if (!voteForm.choice || !voteForm.voter) return;
     setSyncing(true);
     const topic = topics.find(t => t.id === topicId);
+    const voteTopicKey = topic?.voteTopicKey || topic?.title || "";
     const previousVote = topic?.votes?.[voteForm.voter];
     const noteWithTag = isPastDue(topic)
       ? [voteForm.note.trim(), previousVote ? `[Changed in meeting - was: ${previousVote.choice}]` : "[Changed in meeting]"].filter(Boolean).join(" - ")
@@ -386,30 +345,47 @@ export default function App() {
       const supabase = requireSupabase();
       const totalMembers = Number(topic?.totalMembers || BOARD_MEMBER_COUNT);
       const timestamp = new Date().toISOString();
-      const { data: existingVote, error: existingVoteError, topicColumn } = await findExistingVote(supabase, topicId, voteForm.voter);
+      const { data: existingVote, error: existingVoteError } = await supabase
+        .from("Board-Votes")
+        .select("topicId, voter")
+        .eq("topicId", voteTopicKey)
+        .eq("voter", voteForm.voter)
+        .maybeSingle();
 
       if (existingVoteError) throw existingVoteError;
 
       const votePayload = {
+        topicId: voteTopicKey,
         voter: voteForm.voter,
         choice: voteForm.choice,
         note: noteWithTag || "",
-        updated_at: timestamp,
+        timestamp,
       };
 
-      const { error: voteError } = await saveVote(supabase, topicColumn, topicId, voteForm.voter, votePayload, existingVote);
+      const { error: voteError } = existingVote
+        ? await supabase
+            .from("Board-Votes")
+            .update(votePayload)
+            .eq("topicId", voteTopicKey)
+            .eq("voter", voteForm.voter)
+        : await supabase
+            .from("Board-Votes")
+            .insert(votePayload);
 
       if (voteError) throw voteError;
 
-      const { count, error: countError } = await countVotesForTopic(supabase, topicColumn, topicId);
+      const { count, error: countError } = await supabase
+        .from("Board-Votes")
+        .select("*", { count: "exact", head: true })
+        .eq("topicId", voteTopicKey);
 
       if (countError) throw countError;
 
       if ((count || 0) >= totalMembers) {
         const { error: closeError } = await supabase
-          .from("topics")
-          .update({ closed: true })
-          .eq("id", topicId);
+          .from("Board Voting Items")
+          .update({ closed: "true" })
+          .eq("row_id", topic?.rowId);
 
         if (closeError) throw closeError;
       }
@@ -430,9 +406,9 @@ export default function App() {
     try {
       const supabase = requireSupabase();
       const { error } = await supabase
-        .from("topics")
-        .update({ closed: true })
-        .eq("id", topicId);
+        .from("Board Voting Items")
+        .update({ closed: "true" })
+        .eq("row_id", topicId);
 
       if (error) throw error;
       await loadTopics();
@@ -450,13 +426,13 @@ export default function App() {
     try {
       const supabase = requireSupabase();
       const { error } = await supabase
-        .from("topics")
+        .from("Board Voting Items")
         .update({
-          overall_consensus: postMeetingForm.overallConsensus.trim(),
+          overallConsensus: postMeetingForm.overallConsensus.trim(),
           stipulations: postMeetingForm.stipulations.trim(),
-          next_steps: postMeetingForm.nextSteps.trim(),
+          nextSteps: postMeetingForm.nextSteps.trim(),
         })
-        .eq("id", sel.id);
+        .eq("row_id", sel.rowId);
 
       if (error) throw error;
       toast_("Post-meeting update saved.");
